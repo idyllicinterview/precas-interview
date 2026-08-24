@@ -1,6 +1,7 @@
 export type QuestionCategory =
   | "UK & Study Destination"
   | "University & Course"
+  | "University Choice"
   | "Academic Background"
   | "Career Plans"
   | "Finance"
@@ -15,6 +16,9 @@ export type InterviewQuestion = {
   id: number;
   question: string;
   category: QuestionCategory;
+  type?: "core" | "random";
+  preparationTime?: 15;
+  answerTime?: 30 | 90;
 };
 
 export const interviewQuestions: InterviewQuestion[] = [
@@ -533,8 +537,62 @@ function shuffleQuestions(
  * There are 80 questions total.
  * Each interview receives a different random set of 16.
  */
+export const coreInterviewQuestions: InterviewQuestion[] = [
+  {
+    id: 81,
+    category: "Student Life & Support",
+    question:
+      "What are your expectations of the UK's student support services and resources?",
+    type: "core",
+    preparationTime: 15,
+    answerTime: 90,
+  },
+  {
+    id: 82,
+    category: "Accommodation & Living",
+    question:
+      "What type of accommodation are you planning to live in while studying at the university?",
+    type: "core",
+    preparationTime: 15,
+    answerTime: 90,
+  },
+  {
+    id: 83,
+    category: "UKVI & Visa",
+    question:
+      "Have you ever received a visa refusal? If so, please explain why you were refused, when this occurred, the country you applied to, and the type of visa applied for.",
+    type: "core",
+    preparationTime: 15,
+    answerTime: 90,
+  },
+  {
+    id: 84,
+    category: "University Choice",
+    question: "Why did you decide to study at this university?",
+    type: "core",
+    preparationTime: 15,
+    answerTime: 90,
+  },
+];
+
 export function getRandomInterviewQuestions(
   count: number = 16
 ): InterviewQuestion[] {
-  return shuffleQuestions(interviewQuestions).slice(0, count);
+  // Always include all core questions.
+  const coreQuestions = [...coreInterviewQuestions];
+
+  // Number of additional random questions needed.
+  const randomCount = Math.max(0, count - coreQuestions.length);
+
+  // Select random questions from the existing question bank.
+  const randomQuestions = shuffleQuestions(interviewQuestions).slice(
+    0,
+    randomCount
+  );
+
+  // Combine core + random questions, then shuffle the final interview.
+  return shuffleQuestions([...coreQuestions, ...randomQuestions]).slice(
+    0,
+    count
+  );
 }
