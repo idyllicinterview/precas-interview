@@ -596,3 +596,46 @@ export function getRandomInterviewQuestions(
     count
   );
 }
+export function getPersonalizedInterviewQuestions(
+  university: string,
+  course: string,
+  intake: string,
+  count: number = 4
+): InterviewQuestion[] {
+  const personalizedQuestions: InterviewQuestion[] = [
+    {
+      id: 1001,
+      category: "University & Course",
+      question: `Why did you choose ${university} for your ${course} studies?`,
+      type: "random",
+      preparationTime: 15,
+      answerTime: 90,
+    },
+    {
+      id: 1002,
+      category: "University & Course",
+      question: `What specifically attracted you to the ${course} course at ${university}?`,
+      type: "random",
+      preparationTime: 15,
+      answerTime: 90,
+    },
+    {
+      id: 1003,
+      category: "University & Course",
+      question: `How does studying ${course} at ${university} fit into your academic and career plans?`,
+      type: "random",
+      preparationTime: 15,
+      answerTime: 90,
+    },
+    {
+      id: 1004,
+      category: "University & Course",
+      question: `Why have you chosen the ${intake} intake for your studies at ${university}?`,
+      type: "random",
+      preparationTime: 15,
+      answerTime: 90,
+    },
+  ];
+
+  return shuffleQuestions(personalizedQuestions).slice(0, count);
+}

@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getRandomInterviewQuestions, getPersonalizedInterviewQuestions } from "@/data/questions";
+import { getRandomInterviewQuestions } from "@/data/questions";
 import {
   saveInterviewAnswer,
   saveInterviewSession,
@@ -181,37 +181,6 @@ export default function InterviewStartPage() {
     }
 
     if (!intake.trim()) {
-    const personalizedQuestions = getPersonalizedInterviewQuestions(
-      university.trim(),
-      course.trim(),
-      intake.trim(),
-      4
-    );
-
-    const baseQuestions = getRandomInterviewQuestions(12);
-
- const combinedQuestions = [
-  ...personalizedQuestions,
-  ...baseQuestions,
-];
-
-for (let i = combinedQuestions.length - 1; i > 0; i--) {
-  const j = Math.floor(Math.random() * (i + 1));
-  [combinedQuestions[i], combinedQuestions[j]] = [
-    combinedQuestions[j],
-    combinedQuestions[i],
-  ];
-}
-
-setInterviewQuestions(combinedQuestions);
-setQuestionStatus(
-  combinedQuestions.map(() => "unanswered")
-);
-
-    setInterviewQuestions(combinedQuestions);
-    setQuestionStatus(
-      combinedQuestions.map(() => "unanswered")
-    );
       setError("Please enter your intake before starting the interview.");
       return;
     }
