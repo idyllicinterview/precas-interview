@@ -172,13 +172,30 @@ export default function InterviewStartPage() {
       return;
     }
 
-    if (!email.trim()) {
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedEmail) {
       setError("Please enter your email address before starting the interview.");
       return;
     }
 
-    if (!phone.trim()) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!trimmedPhone) {
       setError("Please enter your contact number before starting the interview.");
+      return;
+    }
+
+    const phoneDigits = trimmedPhone.replace(/\D/g, "");
+
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      setError("Please enter a valid contact number.");
       return;
     }
 
