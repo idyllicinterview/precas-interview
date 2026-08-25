@@ -47,6 +47,8 @@ export default function InterviewStartPage() {
   );
 
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [university, setUniversity] = useState("");
   const [course, setCourse] = useState("");
   const [intake, setIntake] = useState("");
@@ -553,7 +555,7 @@ setQuestionStatus(
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                    🎥
+                    {String.fromCodePoint(0x1F3A5)}
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -568,7 +570,7 @@ setQuestionStatus(
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                    ⏱
+                  <div className="text-2xl">{String.fromCodePoint(0x23F1)}</div>
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -583,7 +585,7 @@ setQuestionStatus(
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                    ❓
+                  <div className="text-2xl">❝</div>
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -598,7 +600,7 @@ setQuestionStatus(
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                    🔄
+                  <div className="text-2xl">{String.fromCodePoint(0x1F504)}</div>
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -620,10 +622,10 @@ setQuestionStatus(
                 </p>
 
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-400">
-                  <li>• Find a quiet and well-lit place.</li>
-                  <li>• Keep your face clearly visible on camera.</li>
-                  <li>• Answer in your own words rather than memorising a script.</li>
-                  <li>• Speak clearly and maintain eye contact with the camera.</li>
+                  <li>- Find a quiet and well-lit place.</li>
+                  <li>- Keep your face clearly visible on camera.</li>
+                  <li>- Answer in your own words rather than memorising a script.</li>
+                  <li>- Speak clearly and maintain eye contact with the camera.</li>
                 </ul>
 
               </div>
@@ -651,6 +653,38 @@ setQuestionStatus(
                         setFullName(event.target.value)
                       }
                       placeholder="Enter your full name"
+                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Email Address
+                    </label>
+
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) =>
+                        setEmail(event.target.value)
+                      }
+                      placeholder="Enter your email address"
+                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Contact Number
+                    </label>
+
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(event) =>
+                        setPhone(event.target.value)
+                      }
+                      placeholder="Enter your contact number"
                       className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
                     />
                   </div>
@@ -747,7 +781,7 @@ setQuestionStatus(
                       <div className="px-6 text-center">
 
                         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-3xl">
-                          🎥
+                          {String.fromCodePoint(0x1F3A5)}
                         </div>
 
                         <p className="font-semibold">
@@ -1163,7 +1197,7 @@ setQuestionStatus(
                   <div className="text-center px-6">
 
                     <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-4xl">
-                      🎤
+                      {String.fromCodePoint(0x1F3A4)}
                     </div>
 
                     <p className="font-semibold">
@@ -1269,10 +1303,10 @@ setQuestionStatus(
               </p>
 
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
-                <li>• Speak clearly and confidently.</li>
-                <li>• Give specific reasons and examples.</li>
-                <li>• Avoid memorising a scripted answer.</li>
-                <li>• Look at the camera while answering.</li>
+                <li>- Speak clearly and confidently.</li>
+                <li>- Give specific reasons and examples.</li>
+                <li>- Avoid memorising a scripted answer.</li>
+                <li>- Look at the camera while answering.</li>
               </ul>
 
             </div>
