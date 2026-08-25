@@ -172,17 +172,16 @@ export default function InterviewStartPage() {
       return;
     }
 
-    if (!university.trim()) {
-      setError("Please enter your university before starting the interview.");
+    if (!email.trim()) {
+      setError("Please enter your email address before starting the interview.");
       return;
     }
 
-    if (!course.trim()) {
-      setError("Please enter your course before starting the interview.");
+    if (!phone.trim()) {
+      setError("Please enter your contact number before starting the interview.");
       return;
     }
 
-    if (!intake.trim()) {
     const personalizedQuestions = getPersonalizedInterviewQuestions(
       university.trim(),
       course.trim(),
@@ -192,35 +191,27 @@ export default function InterviewStartPage() {
 
     const baseQuestions = getRandomInterviewQuestions(12);
 
- const combinedQuestions = [
-  ...personalizedQuestions,
-  ...baseQuestions,
-];
+    const combinedQuestions = [
+      ...personalizedQuestions,
+      ...baseQuestions,
+    ];
 
-for (let i = combinedQuestions.length - 1; i > 0; i--) {
-  const j = Math.floor(Math.random() * (i + 1));
-  [combinedQuestions[i], combinedQuestions[j]] = [
-    combinedQuestions[j],
-    combinedQuestions[i],
-  ];
-}
-
-setInterviewQuestions(combinedQuestions);
-setQuestionStatus(
-  combinedQuestions.map(() => "unanswered")
-);
+    for (let i = combinedQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [combinedQuestions[i], combinedQuestions[j]] = [
+        combinedQuestions[j],
+        combinedQuestions[i],
+      ];
+    }
 
     setInterviewQuestions(combinedQuestions);
     setQuestionStatus(
       combinedQuestions.map(() => "unanswered")
     );
-      setError("Please enter your intake before starting the interview.");
-      return;
-    }
 
     if (!cameraReady) {
       setInterviewStartedAt(new Date().toISOString());
-    setInterviewStarted(true);
+      setInterviewStarted(true);
       return;
     }
 
