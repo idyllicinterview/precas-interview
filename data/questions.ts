@@ -602,11 +602,17 @@ export function getPersonalizedInterviewQuestions(
   intake: string,
   count: number = 4
 ): InterviewQuestion[] {
+  const universityName = university.trim();
+  const courseName = course.trim();
+  const intakeName = intake.trim();
+
   const personalizedQuestions: InterviewQuestion[] = [
     {
       id: 1001,
       category: "University & Course",
-      question: `Why did you choose ${university} for your ${course} studies?`,
+      question: universityName
+        ? `Why did you choose ${universityName} for your studies?`
+        : "Why have you chosen your intended university?",
       type: "random",
       preparationTime: 15,
       answerTime: 90,
@@ -614,7 +620,14 @@ export function getPersonalizedInterviewQuestions(
     {
       id: 1002,
       category: "University & Course",
-      question: `What specifically attracted you to the ${course} course at ${university}?`,
+      question:
+        universityName && courseName
+          ? `What specifically attracted you to the ${courseName} course at ${universityName}?`
+          : courseName
+            ? `What specifically attracted you to the ${courseName} course?`
+            : universityName
+              ? `What specifically attracted you to ${universityName}?`
+              : "What specifically attracted you to your chosen course and university?",
       type: "random",
       preparationTime: 15,
       answerTime: 90,
@@ -622,7 +635,14 @@ export function getPersonalizedInterviewQuestions(
     {
       id: 1003,
       category: "University & Course",
-      question: `How does studying ${course} at ${university} fit into your academic and career plans?`,
+      question:
+        universityName && courseName
+          ? `How does studying ${courseName} at ${universityName} fit into your academic and career plans?`
+          : courseName
+            ? `How does studying ${courseName} fit into your academic and career plans?`
+            : universityName
+              ? `How does studying at ${universityName} fit into your academic and career plans?`
+              : "How does your chosen course fit into your academic and career plans?",
       type: "random",
       preparationTime: 15,
       answerTime: 90,
@@ -630,7 +650,14 @@ export function getPersonalizedInterviewQuestions(
     {
       id: 1004,
       category: "University & Course",
-      question: `Why have you chosen the ${intake} intake for your studies at ${university}?`,
+      question:
+        intakeName && universityName
+          ? `Why have you chosen the ${intakeName} intake for your studies at ${universityName}?`
+          : intakeName
+            ? `Why have you chosen the ${intakeName} intake for your studies?`
+            : universityName
+              ? `Why have you chosen your intended intake for studies at ${universityName}?`
+              : "Why have you chosen your intended intake for your studies?",
       type: "random",
       preparationTime: 15,
       answerTime: 90,
