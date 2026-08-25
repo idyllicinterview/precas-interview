@@ -206,7 +206,24 @@ export default function InterviewStartPage() {
       4
     );
 
-    const baseQuestions = getRandomInterviewQuestions(12);
+    // Prevent the general question pool from selecting the same
+    // personalized question IDs.
+    const personalizedIds = personalizedQuestions.map(
+      (question) => question.id
+    );
+
+    // Exclude general questions that duplicate the personalized questions.
+    const duplicateQuestionIds = [9, 10, 27, 84];
+
+    const excludedQuestionIds = [
+      ...personalizedIds,
+      ...duplicateQuestionIds,
+    ];
+
+    const baseQuestions = getRandomInterviewQuestions(
+      12,
+      excludedQuestionIds
+    );
 
     const combinedQuestions = [
       ...personalizedQuestions,
@@ -593,7 +610,7 @@ export default function InterviewStartPage() {
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                  <div className="text-2xl">❝</div>
+                  <div className="text-2xl">Ã¢ÂÂ</div>
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -893,7 +910,7 @@ export default function InterviewStartPage() {
             <div className="text-center">
 
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 text-4xl text-green-400">
-                ✓
+                Ã¢Å“â€œ
               </div>
 
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">
@@ -1419,7 +1436,7 @@ export default function InterviewStartPage() {
           <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
 
             <h2 className="text-xl font-bold">
-              Test answer recorded ✓
+              Test answer recorded Ã¢Å“â€œ
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-slate-400">

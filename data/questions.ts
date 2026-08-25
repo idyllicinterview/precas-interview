@@ -576,16 +576,24 @@ export const coreInterviewQuestions: InterviewQuestion[] = [
 ];
 
 export function getRandomInterviewQuestions(
-  count: number = 16
+  count: number = 16,
+  excludedIds: number[] = []
 ): InterviewQuestion[] {
-  // Always include all core questions.
-  const coreQuestions = [...coreInterviewQuestions];
+  // Keep only core questions that are not excluded.
+  const coreQuestions = coreInterviewQuestions.filter(
+    (question) => !excludedIds.includes(question.id)
+  );
+
+  // Keep only general questions that are not excluded.
+  const availableQuestions = interviewQuestions.filter(
+    (question) => !excludedIds.includes(question.id)
+  );
 
   // Number of additional random questions needed.
   const randomCount = Math.max(0, count - coreQuestions.length);
 
-  // Select random questions from the existing question bank.
-  const randomQuestions = shuffleQuestions(interviewQuestions).slice(
+  // Select random questions from the remaining question bank.
+  const randomQuestions = shuffleQuestions(availableQuestions).slice(
     0,
     randomCount
   );
@@ -596,6 +604,7 @@ export function getRandomInterviewQuestions(
     count
   );
 }
+
 export function getPersonalizedInterviewQuestions(
   university: string,
   course: string,
