@@ -594,9 +594,7 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">
                   <div className="text-2xl">{String.fromCodePoint(0x23F1)}</div>
-                  </div>
 
                   <p className="mt-3 font-semibold">
                     90 seconds per answer
@@ -609,9 +607,7 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">
-                  <div className="text-2xl">Ã¢ÂÂ</div>
-                  </div>
+                  <div className="text-2xl">{String.fromCodePoint(0x2713)}</div>
 
                   <p className="mt-3 font-semibold">
                     {interviewQuestions.length} questions
@@ -624,9 +620,7 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">
                   <div className="text-2xl">{String.fromCodePoint(0x1F504)}</div>
-                  </div>
 
                   <p className="mt-3 font-semibold">
                     Review & re-record
@@ -910,7 +904,7 @@ export default function InterviewStartPage() {
             <div className="text-center">
 
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 text-4xl text-green-400">
-                Ã¢Å“â€œ
+                {String.fromCodePoint(0x2713)}
               </div>
 
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">
@@ -1436,7 +1430,7 @@ export default function InterviewStartPage() {
           <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
 
             <h2 className="text-xl font-bold">
-              Test answer recorded Ã¢Å“â€œ
+              Test answer recorded {String.fromCodePoint(0x2713)}
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-slate-400">
