@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import JSZip from "jszip";
 
 import {
   getRandomInterviewQuestions,
@@ -488,8 +489,58 @@ await saveInterviewSession({
     }
   };
   /*
-   * STOP ANSWER
+   * DOWNLOAD ALL RECORDED VIDEOS
    */
+  const downloadAllRecordedVideos = async () => {
+    const entries = Object.entries(recordedVideos);
+
+    if (entries.length === 0) {
+      setError("No recorded videos are available to download.");
+      return;
+    }
+
+    try {
+      setError("");
+
+      const zip = new JSZip();
+
+      for (const [questionIndex, videoUrl] of entries) {
+        const index = Number(questionIndex);
+
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+
+        zip.file(
+          `Pre-CAS-Interview-Q${String(index + 1).padStart(2, "0")}.webm`,
+          blob
+        );
+      }
+
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+      });
+
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = `Pre-CAS-Interview-${interviewId}.zip`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(downloadUrl);
+    } catch (downloadError) {
+      console.error(
+        "Unable to download recorded videos:",
+        downloadError
+      );
+
+      setError("Unable to create the interview video download.");
+    }
+  };
+
   const stopAnswer = async () => {
     if (!recording) {
       return;
@@ -1294,8 +1345,15 @@ await saveInterviewSession({
                   }
                 )}
               </div>
-            </div>
-<button
+            </div>            
+            <button
+              onClick={downloadAllRecordedVideos}
+              className="mt-4 w-full rounded-xl border border-blue-400/20 bg-blue-500/10 px-8 py-3.5 font-semibold text-blue-300 transition hover:bg-blue-500/20"
+            >
+              Download All Videos
+            </button>
+
+            <button
               onClick={restartInterview}
               className="mt-8 w-full rounded-xl bg-blue-600 px-8 py-3.5 font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500"
             >
@@ -1563,6 +1621,10 @@ return (
     </main>
   );
 }
+
+
+
+
 
 
 
