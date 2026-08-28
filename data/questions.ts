@@ -1,4 +1,4 @@
-export type QuestionCategory =
+﻿export type QuestionCategory =
   | "UK & Study Destination"
   | "University & Course"
   | "University Choice"
@@ -16,7 +16,7 @@ export type InterviewQuestion = {
   id: number;
   question: string;
   category: QuestionCategory;
-  type?: "core" | "random";
+  type?: "core" | "random" | "short";
   preparationTime?: 15;
   answerTime?: 30 | 90;
 };
@@ -537,6 +537,77 @@ function shuffleQuestions(
  * There are 80 questions total.
  * Each interview receives a different random set of 16.
  */
+
+/**
+ * Short-answer questions.
+ * These questions have a 30-second answer limit.
+ */
+export const shortInterviewQuestions: InterviewQuestion[] = [
+  {
+    id: 85,
+    category: "UK & Study Destination",
+    question: "Have you visited the UK before?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 86,
+    category: "UK & Study Destination",
+    question: "Have you considered studying in any other country?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 87,
+    category: "University & Course",
+    question: "Have you researched your university before applying?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 88,
+    category: "Accommodation & Living",
+    question: "Have you researched accommodation near your university?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 89,
+    category: "Accommodation & Living",
+    question: "Do you plan to live alone or with other students?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 90,
+    category: "UKVI & Visa",
+    question: "Do you understand the basic conditions of your UK Student visa?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 91,
+    category: "Career Plans",
+    question: "Do you plan to work after completing your studies?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+  {
+    id: 92,
+    category: "Student Life & Support",
+    question: "Do you plan to join any university clubs or societies?",
+    type: "short",
+    preparationTime: 15,
+    answerTime: 30,
+  },
+];
 export const coreInterviewQuestions: InterviewQuestion[] = [
   {
     id: 81,
@@ -584,27 +655,40 @@ export function getRandomInterviewQuestions(
     (question) => !excludedIds.includes(question.id)
   );
 
-  // Keep only general questions that are not excluded.
-  const availableQuestions = interviewQuestions.filter(
+  // Keep only short-answer questions that are not excluded.
+  const availableShortQuestions = shortInterviewQuestions.filter(
     (question) => !excludedIds.includes(question.id)
   );
 
-  // Number of additional random questions needed.
-  const randomCount = Math.max(0, count - coreQuestions.length);
-
-  // Select random questions from the remaining question bank.
-  const randomQuestions = shuffleQuestions(availableQuestions).slice(
-    0,
-    randomCount
+  // Keep only normal questions that are not excluded.
+  const availableNormalQuestions = interviewQuestions.filter(
+    (question) => !excludedIds.includes(question.id)
   );
 
-  // Combine core + random questions, then shuffle the final interview.
-  return shuffleQuestions([...coreQuestions, ...randomQuestions]).slice(
+  // Select 4 short-answer questions with a 30-second answer limit.
+  const shortCount = Math.min(4, availableShortQuestions.length);
+
+  const selectedShortQuestions = shuffleQuestions(
+    availableShortQuestions
+  ).slice(0, shortCount);
+
+  // Fill the remaining places with normal 90-second questions.
+  const normalCount = Math.max(
     0,
-    count
+    count - coreQuestions.length - selectedShortQuestions.length
   );
+
+  const selectedNormalQuestions = shuffleQuestions(
+    availableNormalQuestions
+  ).slice(0, normalCount);
+
+  // Combine and randomise the final interview.
+  return shuffleQuestions([
+    ...coreQuestions,
+    ...selectedShortQuestions,
+    ...selectedNormalQuestions,
+  ]).slice(0, count);
 }
-
 export function getPersonalizedInterviewQuestions(
   university: string,
   course: string,
@@ -675,3 +759,6 @@ export function getPersonalizedInterviewQuestions(
 
   return shuffleQuestions(personalizedQuestions).slice(0, count);
 }
+
+
+

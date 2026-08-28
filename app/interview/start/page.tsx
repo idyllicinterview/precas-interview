@@ -1,7 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getRandomInterviewQuestions, getPersonalizedInterviewQuestions } from "@/data/questions";
+
+import {
+  getRandomInterviewQuestions,
+  getPersonalizedInterviewQuestions,
+  shortInterviewQuestions,
+  interviewQuestions,
+  coreInterviewQuestions,
+} from "@/data/questions";
+
 import {
   saveInterviewAnswer,
   saveInterviewSession,
@@ -9,14 +17,18 @@ import {
 } from "@/app/interview/lib/interviewStorage";
 
 type Question = {
+  id: number;
   question: string;
   category?: string;
+  preparationTime?: number;
+  answerTime?: number;
 };
 
 type QuestionStatus = "unanswered" | "answered" | "skipped";
 
 export default function InterviewStartPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const interviewVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -27,7 +39,12 @@ export default function InterviewStartPage() {
 
   const [cameraReady, setCameraReady] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [seconds, setSeconds] = useState(90);
+
+  const [interviewPhase, setInterviewPhase] = useState<
+    "preparation" | "answer"
+  >("preparation");
+
+  const [seconds, setSeconds] = useState(15);
 
   const [recordedVideos, setRecordedVideos] = useState<
     Record<number, string>
@@ -40,8 +57,8 @@ export default function InterviewStartPage() {
   const [error, setError] = useState("");
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [savingAnswer, setSavingAnswer] = useState(false);
-  const [interviewStarted, setInterviewStarted] = useState(false);
 
+  const [interviewStarted, setInterviewStarted] = useState(false);
   const [interviewStartedAt, setInterviewStartedAt] = useState<string | null>(
     null
   );
@@ -75,12 +92,21 @@ export default function InterviewStartPage() {
    * TIMER
    */
   useEffect(() => {
-    if (!recording) {
+    if (!interviewStarted) {
       return;
     }
 
     if (seconds <= 0) {
-      stopAnswer();
+      if (interviewPhase === "preparation") {
+        if (cameraReady) {
+          startRealRecording();
+        } else {
+          startTestAnswer();
+        }
+      } else if (interviewPhase === "answer") {
+        stopAnswer();
+      }
+
       return;
     }
 
@@ -89,7 +115,7 @@ export default function InterviewStartPage() {
     }, 1000);
 
     return () => window.clearTimeout(timer);
-  }, [recording, seconds]);
+  }, [interviewStarted, interviewPhase, seconds, cameraReady]);
 
   /*
    * CLEANUP
@@ -104,7 +130,7 @@ export default function InterviewStartPage() {
         URL.revokeObjectURL(videoUrl);
       });
     };
-  }, [recordedVideos]);
+  }, []);
 
   /*
    * CLEAR CURRENT RECORDING
@@ -146,6 +172,8 @@ export default function InterviewStartPage() {
       });
 
       streamRef.current = stream;
+      console.log("Camera tracks:", stream.getVideoTracks().length);
+console.log("Microphone tracks:", stream.getAudioTracks().length);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -160,6 +188,27 @@ export default function InterviewStartPage() {
       );
     }
   };
+
+  /*
+   * ATTACH CAMERA STREAM TO VIDEO PREVIEWS
+   */
+  useEffect(() => {
+    if (!cameraReady || !streamRef.current) {
+      return;
+    }
+
+    const attachStream = (video: HTMLVideoElement | null) => {
+      if (!video) {
+        return;
+      }
+
+      video.srcObject = streamRef.current;
+      video.play().catch(() => {});
+    };
+
+    attachStream(videoRef.current);
+    attachStream(interviewVideoRef.current);
+  }, [cameraReady, interviewStarted]);
 
   /*
    * START INTERVIEW
@@ -206,13 +255,17 @@ export default function InterviewStartPage() {
       4
     );
 
-    // Prevent the general question pool from selecting the same
-    // personalized question IDs.
+    /*
+     * Prevent the general question pool from selecting the same
+     * personalized question IDs.
+     */
     const personalizedIds = personalizedQuestions.map(
       (question) => question.id
     );
 
-    // Exclude general questions that duplicate the personalized questions.
+    /*
+     * Exclude known duplicate questions.
+     */
     const duplicateQuestionIds = [9, 10, 27, 84];
 
     const excludedQuestionIds = [
@@ -220,18 +273,68 @@ export default function InterviewStartPage() {
       ...duplicateQuestionIds,
     ];
 
-    const baseQuestions = getRandomInterviewQuestions(
-      12,
-      excludedQuestionIds
+    /*
+     * Build the 12 additional questions:
+     * 4 short-answer questions = 30 seconds
+     * 8 normal questions = 90 seconds
+     */
+    const availableShortQuestions = shortInterviewQuestions.filter(
+      (question) =>
+        !excludedQuestionIds.includes(question.id)
     );
 
-    const combinedQuestions = [
-      ...personalizedQuestions,
-      ...baseQuestions,
-    ];
+    const availableNormalQuestions = interviewQuestions.filter(
+      (question) =>
+        !excludedQuestionIds.includes(question.id)
+    );
 
+    /*
+     * Select exactly 4 short-answer questions.
+     */
+    const shortQuestions = [...availableShortQuestions];
+
+    for (let i = shortQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      [shortQuestions[i], shortQuestions[j]] = [
+        shortQuestions[j],
+        shortQuestions[i],
+      ];
+    }
+
+    const selectedShortQuestions = shortQuestions.slice(0, 4);
+
+    /*
+     * Select exactly 8 normal 90-second questions.
+     */
+    const normalQuestions = [...availableNormalQuestions];
+
+    for (let i = normalQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      [normalQuestions[i], normalQuestions[j]] = [
+        normalQuestions[j],
+        normalQuestions[i],
+      ];
+    }
+
+    const selectedNormalQuestions = normalQuestions.slice(0, 8);
+
+    /*
+     * Final interview:
+     * 4 personalized/core + 4 short + 8 normal = 16.
+     */
+    const combinedQuestions: Question[] = [
+      ...personalizedQuestions,
+      ...selectedShortQuestions,
+      ...selectedNormalQuestions,
+    ];
+    /*
+     * Randomise the final 16-question interview.
+     */
     for (let i = combinedQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
+
       [combinedQuestions[i], combinedQuestions[j]] = [
         combinedQuestions[j],
         combinedQuestions[i],
@@ -239,18 +342,37 @@ export default function InterviewStartPage() {
     }
 
     setInterviewQuestions(combinedQuestions);
+
     setQuestionStatus(
       combinedQuestions.map(() => "unanswered")
     );
 
-    if (!cameraReady) {
-      setInterviewStartedAt(new Date().toISOString());
-      setInterviewStarted(true);
-      return;
-    }
+    setCurrentQuestion(0);
+    setInterviewPhase("preparation");
+
+    setSeconds(
+      combinedQuestions[0]?.preparationTime ?? 15
+    );
 
     setInterviewStartedAt(new Date().toISOString());
     setInterviewStarted(true);
+
+    /*
+     * Save interview session information.
+     */
+    try {
+await saveInterviewSession({
+  interviewId,
+  fullName: fullName.trim(),
+  phone: phoneDigits,
+  university: university.trim(),
+  course: course.trim(),
+  intake: intake.trim(),
+  startedAt: new Date().toISOString(),
+});
+    } catch (saveError) {
+      console.error("Unable to save interview session:", saveError);
+    }
   };
 
   /*
@@ -262,9 +384,14 @@ export default function InterviewStartPage() {
       return;
     }
 
+    if (recording) {
+      return;
+    }
+
     try {
       setError("");
       clearCurrentRecording();
+
       chunksRef.current = [];
 
       const recorder = new MediaRecorder(streamRef.current);
@@ -277,7 +404,7 @@ export default function InterviewStartPage() {
         }
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, {
           type: "video/webm",
         });
@@ -294,11 +421,45 @@ export default function InterviewStartPage() {
           updated[currentQuestion] = "answered";
           return updated;
         });
+
+        const question = interviewQuestions[currentQuestion];
+
+        if (question) {
+          try {
+            setSavingAnswer(true);
+
+            const answerTime = question.answerTime ?? 90;
+
+            await saveInterviewAnswer(
+              {
+                interviewId,
+                questionIndex: currentQuestion,
+                question: question.question,
+                category: question.category,
+                status: "answered",
+                recordedAt: new Date().toISOString(),
+                duration: Math.max(0, answerTime - seconds),
+              },
+              blob
+            );
+          } catch (saveError) {
+            console.error(
+              "Unable to save recorded interview answer:",
+              saveError
+            );
+          } finally {
+            setSavingAnswer(false);
+          }
+        }
       };
 
       recorder.start();
 
-      setSeconds(90);
+      const answerTime =
+        interviewQuestions[currentQuestion]?.answerTime ?? 90;
+
+      setInterviewPhase("answer");
+      setSeconds(answerTime);
       setRecording(true);
     } catch (recordingError) {
       console.error(recordingError);
@@ -311,10 +472,18 @@ export default function InterviewStartPage() {
    * TESTING MODE RECORDING
    */
   const startTestAnswer = () => {
+    if (recording) {
+      return;
+    }
+
     setError("");
     clearCurrentRecording();
 
-    setSeconds(90);
+    const answerTime =
+      interviewQuestions[currentQuestion]?.answerTime ?? 90;
+
+    setInterviewPhase("answer");
+    setSeconds(answerTime);
     setRecording(true);
   };
 
@@ -340,35 +509,51 @@ export default function InterviewStartPage() {
         ...previous,
         [currentQuestion]: true,
       }));
-    }
 
-    setQuestionStatus((previous) => {
-      const updated = [...previous];
-      updated[currentQuestion] = "answered";
-      return updated;
-    });
+      setQuestionStatus((previous) => {
+        const updated = [...previous];
+        updated[currentQuestion] = "answered";
+        return updated;
+      });
 
-    const question = interviewQuestions[currentQuestion];
+      const question = interviewQuestions[currentQuestion];
 
-    if (question) {
-      try {
-        setSavingAnswer(true);
+      if (question) {
+        try {
+          setSavingAnswer(true);
 
-        await saveInterviewAnswer({
-          interviewId,
-          questionIndex: currentQuestion,
-          question: question.question,
-          category: question.category,
-          status: "answered",
-          recordedAt: new Date().toISOString(),
-          duration: 90 - seconds,
-        });
-      } catch (saveError) {
-        console.error("Unable to save interview answer:", saveError);
-      } finally {
-        setSavingAnswer(false);
+          const answerTime = question.answerTime ?? 90;
+
+          await saveInterviewAnswer({
+            interviewId,
+            questionIndex: currentQuestion,
+            question: question.question,
+            category: question.category,
+            status: "answered",
+            recordedAt: new Date().toISOString(),
+            duration: Math.max(0, answerTime - seconds),
+          });
+        } catch (saveError) {
+          console.error(
+            "Unable to save test interview answer:",
+            saveError
+          );
+        } finally {
+          setSavingAnswer(false);
+        }
       }
     }
+  };
+
+  /*
+   * START PREPARATION FOR CURRENT QUESTION
+   */
+  const startPreparationForCurrentQuestion = () => {
+    const preparationTime =
+      interviewQuestions[currentQuestion]?.preparationTime ?? 15;
+
+    setInterviewPhase("preparation");
+    setSeconds(preparationTime);
   };
 
   /*
@@ -379,35 +564,30 @@ export default function InterviewStartPage() {
       return;
     }
 
-    setSeconds(90);
-
     if (currentQuestion < interviewQuestions.length - 1) {
-      setCurrentQuestion((value) => value + 1);
+      const nextQuestionIndex = currentQuestion + 1;
+
+      setCurrentQuestion(nextQuestionIndex);
+
+      const nextQuestion =
+        interviewQuestions[nextQuestionIndex];
+
+      setInterviewPhase("preparation");
+
+      setSeconds(
+        nextQuestion?.preparationTime ?? 15
+      );
     } else {
       setInterviewComplete(true);
     }
   };
 
-  /*
-   * PREVIOUS QUESTION
-   */
-  const moveToPreviousQuestion = () => {
-    if (recording) {
-      return;
-    }
-
-    setSeconds(90);
-
-    if (currentQuestion > 0) {
-      setCurrentQuestion((value) => value - 1);
-    }
-  };
 
   /*
    * SKIP QUESTION
    */
   const skipQuestion = async () => {
-    if (recording) {
+    if (recording || savingAnswer) {
       return;
     }
 
@@ -425,7 +605,10 @@ export default function InterviewStartPage() {
           duration: 0,
         });
       } catch (saveError) {
-        console.error("Unable to save skipped question:", saveError);
+        console.error(
+          "Unable to save skipped question:",
+          saveError
+        );
       }
     }
 
@@ -437,10 +620,19 @@ export default function InterviewStartPage() {
       return updated;
     });
 
-    setSeconds(90);
-
     if (currentQuestion < interviewQuestions.length - 1) {
-      setCurrentQuestion((value) => value + 1);
+      const nextQuestionIndex = currentQuestion + 1;
+
+      setCurrentQuestion(nextQuestionIndex);
+
+      const nextQuestion =
+        interviewQuestions[nextQuestionIndex];
+
+      setInterviewPhase("preparation");
+
+      setSeconds(
+        nextQuestion?.preparationTime ?? 15
+      );
     } else {
       setInterviewComplete(true);
     }
@@ -460,7 +652,9 @@ export default function InterviewStartPage() {
     }
 
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current
+        .getTracks()
+        .forEach((track) => track.stop());
     }
 
     streamRef.current = null;
@@ -472,16 +666,32 @@ export default function InterviewStartPage() {
     const questions = getRandomInterviewQuestions();
 
     setInterviewQuestions(questions);
-    setQuestionStatus(questions.map(() => "unanswered"));
+    setQuestionStatus(
+      questions.map(() => "unanswered")
+    );
+
     setCurrentQuestion(0);
+
     setCameraReady(false);
     setRecording(false);
-    setSeconds(90);
+
+    setInterviewPhase("preparation");
+
+    setSeconds(
+      questions[0]?.preparationTime ?? 15
+    );
+
     setRecordedVideos({});
     setTestAnswerRecorded({});
+
     setError("");
     setInterviewComplete(false);
+
     setInterviewStarted(false);
+    setInterviewStartedAt(null);
+
+    recorderRef.current = null;
+    chunksRef.current = [];
   };
 
   /*
@@ -555,9 +765,7 @@ export default function InterviewStartPage() {
 
         <section className="mx-auto max-w-7xl px-6 py-10">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-
             <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-8 shadow-2xl sm:p-10">
-
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">
                 Pre-CAS Preparation
               </p>
@@ -577,10 +785,9 @@ export default function InterviewStartPage() {
               </p>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
-
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
                   <div className="text-2xl">
-                    {String.fromCodePoint(0x1F3A5)}
+                    {String.fromCodePoint(0x1f3a5)}
                   </div>
 
                   <p className="mt-3 font-semibold">
@@ -594,7 +801,9 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">{String.fromCodePoint(0x23F1)}</div>
+                  <div className="text-2xl">
+                    {String.fromCodePoint(0x23f1)}
+                  </div>
 
                   <p className="mt-3 font-semibold">
                     90 seconds per answer
@@ -607,7 +816,9 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">{String.fromCodePoint(0x2713)}</div>
+                  <div className="text-2xl">
+                    {String.fromCodePoint(0x2713)}
+                  </div>
 
                   <p className="mt-3 font-semibold">
                     {interviewQuestions.length} questions
@@ -620,7 +831,9 @@ export default function InterviewStartPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
-                  <div className="text-2xl">{String.fromCodePoint(0x1F504)}</div>
+                  <div className="text-2xl">
+                    {String.fromCodePoint(0x1f504)}
+                  </div>
 
                   <p className="mt-3 font-semibold">
                     Review & re-record
@@ -631,11 +844,9 @@ export default function InterviewStartPage() {
                     continuing.
                   </p>
                 </div>
-
               </div>
 
               <div className="mt-8 rounded-2xl border border-blue-400/10 bg-blue-500/5 p-5">
-
                 <p className="text-sm font-semibold text-blue-300">
                   Before you begin
                 </p>
@@ -643,14 +854,18 @@ export default function InterviewStartPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-400">
                   <li>- Find a quiet and well-lit place.</li>
                   <li>- Keep your face clearly visible on camera.</li>
-                  <li>- Answer in your own words rather than memorising a script.</li>
-                  <li>- Speak clearly and maintain eye contact with the camera.</li>
+                  <li>
+                    - Answer in your own words rather than memorising
+                    a script.
+                  </li>
+                  <li>
+                    - Speak clearly and maintain eye contact with
+                    the camera.
+                  </li>
                 </ul>
-
               </div>
 
               <div className="mt-8 rounded-2xl border border-white/10 bg-[#101f33] p-6">
-
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-400">
                   Candidate Information
                 </p>
@@ -660,7 +875,6 @@ export default function InterviewStartPage() {
                 </p>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-
                   <div>
                     <label className="mb-2 block text-sm font-semibold">
                       Full Name
@@ -752,17 +966,16 @@ export default function InterviewStartPage() {
                       className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
                     />
                   </div>
-
                 </div>
 
                 <p className="mt-4 text-xs text-slate-500">
-                  Your information will be associated with this mock interview.
+                  Your information will be associated with this mock
+                  interview.
                 </p>
 
                 <p className="mt-2 text-xs font-semibold text-blue-400">
                   Interview ID: {interviewId}
                 </p>
-
               </div>
 
               {error && (
@@ -777,15 +990,11 @@ export default function InterviewStartPage() {
               >
                 Start Interview
               </button>
-
             </div>
 
             <div className="flex flex-col gap-5">
-
               <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl">
-
                 <div className="relative aspect-video">
-
                   {cameraReady ? (
                     <video
                       ref={videoRef}
@@ -796,11 +1005,9 @@ export default function InterviewStartPage() {
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0c1b2e] to-[#07111f]">
-
                       <div className="px-6 text-center">
-
                         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-3xl">
-                          {String.fromCodePoint(0x1F3A5)}
+                          {String.fromCodePoint(0x1f3a5)}
                         </div>
 
                         <p className="font-semibold">
@@ -810,31 +1017,45 @@ export default function InterviewStartPage() {
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           Camera is optional in Testing Mode.
                         </p>
-
                       </div>
-
                     </div>
                   )}
-
                 </div>
-
               </div>
 
-              <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-6">
+              <button
+                onClick={startCamera}
+                disabled={cameraReady}
+                className="w-full rounded-xl border border-white/10 bg-[#0d1b2d] px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {cameraReady
+                  ? "Camera & Microphone Ready"
+                  : "Enable Camera & Microphone"}
+              </button>
 
+              <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-6">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
                   Interview format
                 </p>
 
                 <div className="mt-5 space-y-4">
-
                   <div className="flex items-center justify-between border-b border-white/5 pb-4">
                     <span className="text-sm text-slate-400">
                       Questions
                     </span>
 
                     <span className="font-semibold">
-                      {interviewQuestions.length}
+                      16
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <span className="text-sm text-slate-400">
+                      Preparation
+                    </span>
+
+                    <span className="font-semibold">
+                      15 seconds
                     </span>
                   </div>
 
@@ -859,13 +1080,9 @@ export default function InterviewStartPage() {
                         : "Testing Mode"}
                     </span>
                   </div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
         </section>
       </main>
@@ -878,11 +1095,8 @@ export default function InterviewStartPage() {
   if (interviewComplete) {
     return (
       <main className="min-h-screen bg-[#07111f] text-white">
-
         <header className="border-b border-white/10 bg-[#081526]">
-
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
             <img
               src="/idyllic-logo.png"
               alt="Idyllic"
@@ -892,17 +1106,12 @@ export default function InterviewStartPage() {
             <div className="rounded-full border border-green-400/20 bg-green-500/10 px-4 py-2 text-xs font-semibold text-green-300">
               Interview Complete
             </div>
-
           </div>
-
         </header>
 
         <section className="mx-auto max-w-5xl px-6 py-10">
-
           <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-8 shadow-2xl sm:p-10">
-
             <div className="text-center">
-
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 text-4xl text-green-400">
                 {String.fromCodePoint(0x2713)}
               </div>
@@ -919,11 +1128,9 @@ export default function InterviewStartPage() {
                 You have completed your mock interview.
                 Review your question status below.
               </p>
-
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
-
               <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Answered
@@ -965,13 +1172,10 @@ export default function InterviewStartPage() {
                   questions
                 </p>
               </div>
-
             </div>
 
             <div className="mt-8 rounded-2xl border border-white/5 bg-[#13243a] p-6">
-
               <div className="flex items-center justify-between">
-
                 <div>
                   <p className="text-sm font-semibold">
                     Completion
@@ -985,26 +1189,20 @@ export default function InterviewStartPage() {
                 <p className="text-2xl font-bold text-blue-400">
                   {completionPercentage}%
                 </p>
-
               </div>
 
               <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-800">
-
                 <div
                   className="h-full rounded-full bg-blue-500 transition-all"
                   style={{
                     width: `${completionPercentage}%`,
                   }}
                 />
-
               </div>
-
             </div>
 
             <div className="mt-8">
-
               <div className="mb-4 flex items-center justify-between">
-
                 <div>
                   <h2 className="text-xl font-bold">
                     Question Review
@@ -1018,13 +1216,10 @@ export default function InterviewStartPage() {
                 <span className="text-xs font-semibold text-slate-500">
                   {interviewQuestions.length} questions
                 </span>
-
               </div>
 
               <div className="space-y-3">
-
                 {interviewQuestions.map((question, index) => {
-
                   const status =
                     questionStatus[index] ?? "unanswered";
 
@@ -1047,17 +1242,13 @@ export default function InterviewStartPage() {
                       key={`${index}-${question.question}`}
                       className="rounded-2xl border border-white/5 bg-[#13243a] p-5"
                     >
-
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-
                         <div className="flex gap-4">
-
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xs font-bold text-blue-400">
                             {String(index + 1).padStart(2, "0")}
                           </div>
 
                           <div>
-
                             {question.category && (
                               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-400/70">
                                 {question.category}
@@ -1067,9 +1258,7 @@ export default function InterviewStartPage() {
                             <p className="text-sm font-semibold leading-6 text-slate-200">
                               {question.question}
                             </p>
-
                           </div>
-
                         </div>
 
                         <span
@@ -1077,15 +1266,11 @@ export default function InterviewStartPage() {
                         >
                           {statusLabel}
                         </span>
-
                       </div>
-
                     </div>
                   );
                 })}
-
               </div>
-
             </div>
 
             <button
@@ -1094,11 +1279,8 @@ export default function InterviewStartPage() {
             >
               Start New Interview
             </button>
-
           </div>
-
         </section>
-
       </main>
     );
   }
@@ -1106,7 +1288,6 @@ export default function InterviewStartPage() {
   /*
    * INTERVIEW SCREEN
    */
-
   const currentQuestionData =
     interviewQuestions[currentQuestion];
 
@@ -1115,8 +1296,15 @@ export default function InterviewStartPage() {
       interviewQuestions.length) *
     100;
 
+  const currentTimeLimit =
+    interviewPhase === "preparation"
+      ? currentQuestionData?.preparationTime ?? 15
+      : currentQuestionData?.answerTime ?? 90;
+
   const timeProgress =
-    (seconds / 90) * 100;
+    currentTimeLimit > 0
+      ? (seconds / currentTimeLimit) * 100
+      : 0;
 
   const currentStatus =
     questionStatus[currentQuestion] ?? "unanswered";
@@ -1129,13 +1317,9 @@ export default function InterviewStartPage() {
 
   return (
     <main className="min-h-screen bg-[#07111f] text-white">
-
       <header className="border-b border-white/10 bg-[#081526]">
-
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
           <div className="flex items-center gap-4">
-
             <img
               src="/idyllic-logo.png"
               alt="Idyllic"
@@ -1145,7 +1329,6 @@ export default function InterviewStartPage() {
             <div className="hidden h-8 w-px bg-white/10 sm:block" />
 
             <div className="hidden sm:block">
-
               <p className="text-sm font-semibold">
                 Pre-CAS
               </p>
@@ -1153,58 +1336,40 @@ export default function InterviewStartPage() {
               <p className="text-xs text-slate-500">
                 Mock Interview
               </p>
-
             </div>
-
           </div>
 
           <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-xs font-semibold text-blue-300">
             Question {currentQuestion + 1} of{" "}
             {interviewQuestions.length}
           </div>
-
         </div>
-
       </header>
 
       <div className="mx-auto max-w-7xl px-6 pt-6">
-
         <div className="mb-2 flex justify-between text-xs text-slate-500">
+          <span>Interview progress</span>
 
-          <span>
-            Interview progress
-          </span>
-
-          <span>
-            {Math.round(progress)}%
-          </span>
-
+          <span>{Math.round(progress)}%</span>
         </div>
 
         <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-
           <div
             className="h-full rounded-full bg-blue-500 transition-all duration-500"
             style={{
               width: `${progress}%`,
             }}
           />
-
         </div>
-
       </div>
 
       <section className="mx-auto max-w-7xl px-6 py-8">
-
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-
           <div>
-
             <div className="relative aspect-video overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl">
-
               {cameraReady ? (
                 <video
-                  ref={videoRef}
+                  ref={interviewVideoRef}
                   autoPlay
                   muted
                   playsInline
@@ -1212,11 +1377,9 @@ export default function InterviewStartPage() {
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0c1b2e] to-[#07111f]">
-
-                  <div className="text-center px-6">
-
+                  <div className="px-6 text-center">
                     <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-4xl">
-                      {String.fromCodePoint(0x1F3A4)}
+                      {String.fromCodePoint(0x1f3a4)}
                     </div>
 
                     <p className="font-semibold">
@@ -1227,26 +1390,19 @@ export default function InterviewStartPage() {
                       Camera and video recording are disabled.
                       You can still complete the interview flow.
                     </p>
-
                   </div>
-
                 </div>
               )}
 
               {recording && (
                 <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-xs font-bold">
-
                   <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-white" />
-
                   RECORDING
-
                 </div>
               )}
-
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
-
               {!recording &&
                 !currentRecordedVideo &&
                 !currentTestAnswer && (
@@ -1272,15 +1428,11 @@ export default function InterviewStartPage() {
                   Stop Answer
                 </button>
               )}
-
             </div>
-
           </div>
 
           <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-7 shadow-xl">
-
             <div className="flex items-center justify-between">
-
               <span className="rounded-full border border-blue-400/10 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300">
                 QUESTION{" "}
                 {String(currentQuestion + 1).padStart(2, "0")}
@@ -1290,12 +1442,17 @@ export default function InterviewStartPage() {
                 className={
                   recording
                     ? "text-sm font-semibold text-red-400"
+                    : interviewPhase === "preparation"
+                    ? "text-sm font-semibold text-blue-400"
                     : "text-sm font-semibold text-slate-500"
                 }
               >
-                {recording ? `${seconds}s` : "90s"}
+                {interviewPhase === "preparation"
+                  ? `${seconds}s preparation`
+                  : recording
+                  ? `${seconds}s`
+                  : `${currentQuestionData?.answerTime ?? 90}s`}
               </span>
-
             </div>
 
             {currentQuestionData?.category && (
@@ -1309,14 +1466,12 @@ export default function InterviewStartPage() {
             </h1>
 
             <p className="mt-5 text-sm leading-6 text-slate-400">
-              Take a moment to think about your answer. When
-              you are ready, start your answer and respond
-              naturally as if you were speaking to a university
-              interviewer.
+              {interviewPhase === "preparation"
+                ? "Take a moment to think about your answer. Your answer timer will begin automatically when preparation time ends."
+                : "Respond naturally as if you were speaking to a university interviewer."}
             </p>
 
             <div className="mt-8 rounded-2xl border border-white/5 bg-[#13243a] p-5">
-
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Answer tips
               </p>
@@ -1327,11 +1482,9 @@ export default function InterviewStartPage() {
                 <li>- Avoid memorising a scripted answer.</li>
                 <li>- Look at the camera while answering.</li>
               </ul>
-
             </div>
 
             <div className="mt-6 flex items-center gap-3 rounded-xl border border-white/5 bg-[#101f33] px-4 py-3">
-
               <span
                 className={
                   currentStatus === "answered"
@@ -1349,35 +1502,47 @@ export default function InterviewStartPage() {
                   ? "Question skipped"
                   : "Not attempted"}
               </span>
-
             </div>
+
+            {interviewPhase === "preparation" && (
+              <div className="mt-8">
+                <div className="mb-2 flex justify-between text-xs text-slate-500">
+                  <span>Preparation time</span>
+
+                  <span className="font-semibold text-blue-400">
+                    {seconds} seconds
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all"
+                    style={{
+                      width: `${timeProgress}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {recording && (
               <div className="mt-8">
-
                 <div className="mb-2 flex justify-between text-xs text-slate-500">
-
-                  <span>
-                    Time remaining
-                  </span>
+                  <span>Time remaining</span>
 
                   <span className="font-semibold text-red-400">
                     {seconds} seconds
                   </span>
-
                 </div>
 
                 <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-
                   <div
                     className="h-full rounded-full bg-red-500 transition-all"
                     style={{
                       width: `${timeProgress}%`,
                     }}
                   />
-
                 </div>
-
               </div>
             )}
 
@@ -1390,16 +1555,8 @@ export default function InterviewStartPage() {
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6">
 
               <button
-                onClick={moveToPreviousQuestion}
-                disabled={currentQuestion === 0 || recording}
-                className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                Previous
-              </button>
-
-              <button
                 onClick={skipQuestion}
-                disabled={recording}
+                disabled={recording || savingAnswer}
                 className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Skip
@@ -1419,16 +1576,12 @@ export default function InterviewStartPage() {
                   ? "Finish Interview"
                   : "Next Question"}
               </button>
-
             </div>
-
           </div>
-
         </div>
 
         {currentTestAnswer && (
           <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
-
             <h2 className="text-xl font-bold">
               Test answer recorded {String.fromCodePoint(0x2713)}
             </h2>
@@ -1445,18 +1598,17 @@ export default function InterviewStartPage() {
             )}
 
             <div className="mt-6 flex flex-wrap gap-3">
-
               <button
                 onClick={() => {
                   clearCurrentRecording();
-
-                  setSeconds(90);
 
                   setQuestionStatus((previous) => {
                     const updated = [...previous];
                     updated[currentQuestion] = "unanswered";
                     return updated;
                   });
+
+                  startPreparationForCurrentQuestion();
                 }}
                 className="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5"
               >
@@ -1473,15 +1625,12 @@ export default function InterviewStartPage() {
                   ? "Finish Interview"
                   : "Continue"}
               </button>
-
             </div>
-
           </div>
         )}
 
         {currentRecordedVideo && (
           <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
-
             <h2 className="text-xl font-bold">
               Your answer has been recorded
             </h2>
@@ -1503,18 +1652,17 @@ export default function InterviewStartPage() {
             />
 
             <div className="mt-5 flex flex-wrap gap-3">
-
               <button
                 onClick={() => {
                   clearCurrentRecording();
-
-                  setSeconds(90);
 
                   setQuestionStatus((previous) => {
                     const updated = [...previous];
                     updated[currentQuestion] = "unanswered";
                     return updated;
                   });
+
+                  startPreparationForCurrentQuestion();
                 }}
                 className="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5"
               >
@@ -1531,15 +1679,24 @@ export default function InterviewStartPage() {
                   ? "Finish Interview"
                   : "Continue"}
               </button>
-
             </div>
-
           </div>
         )}
-
       </section>
-
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
