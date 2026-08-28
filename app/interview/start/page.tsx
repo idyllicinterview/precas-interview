@@ -50,10 +50,6 @@ export default function InterviewStartPage() {
     Record<number, string>
   >({});
 
-  const [testAnswerRecorded, setTestAnswerRecorded] = useState<
-    Record<number, boolean>
-  >({});
-
   const [error, setError] = useState("");
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [savingAnswer, setSavingAnswer] = useState(false);
@@ -101,7 +97,9 @@ export default function InterviewStartPage() {
         if (cameraReady) {
           startRealRecording();
         } else {
-          startTestAnswer();
+          setError(
+            "Please enable your camera and microphone before recording."
+          );
         }
       } else if (interviewPhase === "answer") {
         stopAnswer();
@@ -146,12 +144,6 @@ export default function InterviewStartPage() {
 
       return updated;
     });
-
-    setTestAnswerRecorded((previous) => {
-      const updated = { ...previous };
-      delete updated[currentQuestion];
-      return updated;
-    });
   };
 
   /*
@@ -184,7 +176,7 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
       console.error(cameraError);
 
       setError(
-        "Camera or microphone access was denied. Testing Mode is available below."
+        "Camera or microphone access was denied. Please enable your camera and microphone to continue."
       );
     }
   };
@@ -424,8 +416,8 @@ await saveInterviewSession({
 
         const question = interviewQuestions[currentQuestion];
 
-        if (question) {
-          try {
+        try {
+          if (question) {
             setSavingAnswer(true);
 
             const answerTime = question.answerTime ?? 90;
@@ -442,17 +434,45 @@ await saveInterviewSession({
               },
               blob
             );
-          } catch (saveError) {
-            console.error(
-              "Unable to save recorded interview answer:",
-              saveError
-            );
-          } finally {
-            setSavingAnswer(false);
           }
+        } catch (saveError) {
+          console.error(
+            "Unable to save recorded interview answer:",
+            saveError
+          );
+        } finally {
+          setSavingAnswer(false);
+        }
+
+        /*
+         * Automatically continue after the recording
+         * has been saved.
+         */
+        if (currentQuestion < interviewQuestions.length - 1) {
+          const nextQuestionIndex = currentQuestion + 1;
+
+          setCurrentQuestion(nextQuestionIndex);
+
+          const nextQuestion =
+            interviewQuestions[nextQuestionIndex];
+
+          setInterviewPhase("preparation");
+
+          setSeconds(
+            nextQuestion?.preparationTime ?? 15
+          );
+        } else {
+          /*
+           * Question 16 is complete.
+           * Stop the interview and show the final
+           * recording review screen.
+           */
+          setInterviewComplete(true);
+          setInterviewStarted(false);
+          setInterviewPhase("preparation");
+          setSeconds(0);
         }
       };
-
       recorder.start();
 
       const answerTime =
@@ -467,26 +487,6 @@ await saveInterviewSession({
       setError("Unable to start recording on this browser.");
     }
   };
-
-  /*
-   * TESTING MODE RECORDING
-   */
-  const startTestAnswer = () => {
-    if (recording) {
-      return;
-    }
-
-    setError("");
-    clearCurrentRecording();
-
-    const answerTime =
-      interviewQuestions[currentQuestion]?.answerTime ?? 90;
-
-    setInterviewPhase("answer");
-    setSeconds(answerTime);
-    setRecording(true);
-  };
-
   /*
    * STOP ANSWER
    */
@@ -503,46 +503,6 @@ await saveInterviewSession({
     }
 
     setRecording(false);
-
-    if (!cameraReady) {
-      setTestAnswerRecorded((previous) => ({
-        ...previous,
-        [currentQuestion]: true,
-      }));
-
-      setQuestionStatus((previous) => {
-        const updated = [...previous];
-        updated[currentQuestion] = "answered";
-        return updated;
-      });
-
-      const question = interviewQuestions[currentQuestion];
-
-      if (question) {
-        try {
-          setSavingAnswer(true);
-
-          const answerTime = question.answerTime ?? 90;
-
-          await saveInterviewAnswer({
-            interviewId,
-            questionIndex: currentQuestion,
-            question: question.question,
-            category: question.category,
-            status: "answered",
-            recordedAt: new Date().toISOString(),
-            duration: Math.max(0, answerTime - seconds),
-          });
-        } catch (saveError) {
-          console.error(
-            "Unable to save test interview answer:",
-            saveError
-          );
-        } finally {
-          setSavingAnswer(false);
-        }
-      }
-    }
   };
 
   /*
@@ -682,7 +642,7 @@ await saveInterviewSession({
     );
 
     setRecordedVideos({});
-    setTestAnswerRecorded({});
+
 
     setError("");
     setInterviewComplete(false);
@@ -1015,7 +975,7 @@ await saveInterviewSession({
                         </p>
 
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          Camera is optional in Testing Mode.
+                          Enable your camera and microphone before starting the interview.
                         </p>
                       </div>
                     </div>
@@ -1075,9 +1035,7 @@ await saveInterviewSession({
                     </span>
 
                     <span className="font-semibold text-green-400">
-                      {cameraReady
-                        ? "Video + Audio"
-                        : "Testing Mode"}
+                      "Video + Audio"
                     </span>
                   </div>
                 </div>
@@ -1273,7 +1231,71 @@ await saveInterviewSession({
               </div>
             </div>
 
-            <button
+                        <div className="mt-8">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold">
+                  Recorded Answers
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Review the answers recorded during this interview.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                {Object.entries(recordedVideos).map(
+                  ([questionIndex, videoUrl]) => {
+                    const index = Number(questionIndex);
+                    const question = interviewQuestions[index];
+
+                    if (!question) {
+                      return null;
+                    }
+
+                    return (
+                      <div
+                        key={`recorded-${index}`}
+                        className="rounded-2xl border border-white/5 bg-[#13243a] p-5"
+                      >
+                        <div className="mb-4 flex items-start gap-4">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xs font-bold text-blue-400">
+                            {String(index + 1).padStart(2, "0")}
+                          </div>
+
+                          <div>
+                            {question.category && (
+                              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-400/70">
+                                {question.category}
+                              </p>
+                            )}
+
+                            <p className="text-sm font-semibold leading-6 text-slate-200">
+                              {question.question}
+                            </p>
+                          </div>
+                        </div>
+
+                        <video
+                          src={videoUrl}
+                          controls
+                          playsInline
+                          className="w-full rounded-2xl border border-white/10 bg-black"
+                        />
+
+                        <a
+                          href={videoUrl}
+                          download={`Pre-CAS-Interview-Q${String(index + 1).padStart(2, "0")}.webm`}
+                          className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+                        >
+                          Download Video
+                        </a>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+<button
               onClick={restartInterview}
               className="mt-8 w-full rounded-xl bg-blue-600 px-8 py-3.5 font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500"
             >
@@ -1311,11 +1333,7 @@ await saveInterviewSession({
 
   const currentRecordedVideo =
     recordedVideos[currentQuestion] ?? null;
-
-  const currentTestAnswer =
-    testAnswerRecorded[currentQuestion] ?? false;
-
-  return (
+return (
     <main className="min-h-screen bg-[#07111f] text-white">
       <header className="border-b border-white/10 bg-[#081526]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
@@ -1367,7 +1385,7 @@ await saveInterviewSession({
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div>
             <div className="relative aspect-video overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl">
-              {cameraReady ? (
+              {cameraReady && (
                 <video
                   ref={interviewVideoRef}
                   autoPlay
@@ -1375,23 +1393,6 @@ await saveInterviewSession({
                   playsInline
                   className="h-full w-full object-cover"
                 />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0c1b2e] to-[#07111f]">
-                  <div className="px-6 text-center">
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-4xl">
-                      {String.fromCodePoint(0x1f3a4)}
-                    </div>
-
-                    <p className="font-semibold">
-                      Testing Mode
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Camera and video recording are disabled.
-                      You can still complete the interview flow.
-                    </p>
-                  </div>
-                </div>
               )}
 
               {recording && (
@@ -1405,18 +1406,12 @@ await saveInterviewSession({
             <div className="mt-4 flex flex-wrap gap-3">
               {!recording &&
                 !currentRecordedVideo &&
-                !currentTestAnswer && (
+                (
                   <button
-                    onClick={
-                      cameraReady
-                        ? startRealRecording
-                        : startTestAnswer
-                    }
+                    onClick={startRealRecording}
                     className="rounded-xl bg-red-600 px-6 py-3 font-semibold transition hover:bg-red-500"
                   >
-                    {cameraReady
-                      ? "Start Recording"
-                      : "Start Test Answer"}
+                    Start Recording
                   </button>
                 )}
 
@@ -1561,131 +1556,37 @@ await saveInterviewSession({
               >
                 Skip
               </button>
-
-              <button
-                onClick={moveToNextQuestion}
-                disabled={
-                  recording ||
-                  savingAnswer ||
-                  (!currentRecordedVideo && !currentTestAnswer)
-                }
-                className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {currentQuestion ===
-                interviewQuestions.length - 1
-                  ? "Finish Interview"
-                  : "Next Question"}
-              </button>
             </div>
           </div>
         </div>
-
-        {currentTestAnswer && (
-          <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
-            <h2 className="text-xl font-bold">
-              Test answer recorded {String.fromCodePoint(0x2713)}
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              This is Testing Mode. No camera or video file was
-              recorded, but the answer has been marked as completed.
-            </p>
-
-            {savingAnswer && (
-              <p className="mt-3 text-sm text-blue-400">
-                Saving your answer securely...
-              </p>
-            )}
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  clearCurrentRecording();
-
-                  setQuestionStatus((previous) => {
-                    const updated = [...previous];
-                    updated[currentQuestion] = "unanswered";
-                    return updated;
-                  });
-
-                  startPreparationForCurrentQuestion();
-                }}
-                className="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5"
-              >
-                Answer Again
-              </button>
-
-              <button
-                onClick={moveToNextQuestion}
-                disabled={savingAnswer}
-                className="rounded-xl bg-blue-600 px-6 py-3 font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {currentQuestion ===
-                interviewQuestions.length - 1
-                  ? "Finish Interview"
-                  : "Continue"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentRecordedVideo && (
-          <div className="mt-8 rounded-[2rem] border border-green-500/20 bg-green-500/5 p-7">
-            <h2 className="text-xl font-bold">
-              Your answer has been recorded
-            </h2>
-
-            {savingAnswer && (
-              <p className="mt-2 text-sm text-blue-400">
-                Saving your answer securely...
-              </p>
-            )}
-
-            <p className="mt-1 text-sm text-slate-400">
-              Review your answer before continuing.
-            </p>
-
-            <video
-              src={currentRecordedVideo}
-              controls
-              className="mt-6 w-full max-w-3xl rounded-2xl border border-white/10"
-            />
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  clearCurrentRecording();
-
-                  setQuestionStatus((previous) => {
-                    const updated = [...previous];
-                    updated[currentQuestion] = "unanswered";
-                    return updated;
-                  });
-
-                  startPreparationForCurrentQuestion();
-                }}
-                className="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5"
-              >
-                Record Again
-              </button>
-
-              <button
-                onClick={moveToNextQuestion}
-                disabled={savingAnswer}
-                className="rounded-xl bg-blue-600 px-6 py-3 font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {currentQuestion ===
-                interviewQuestions.length - 1
-                  ? "Finish Interview"
-                  : "Continue"}
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+</section>
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

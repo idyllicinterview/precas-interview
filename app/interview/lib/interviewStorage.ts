@@ -1,4 +1,4 @@
-﻿export type SavedInterviewAnswer = {
+export type SavedInterviewAnswer = {
   interviewId: string;
   questionIndex: number;
   question: string;
@@ -6,20 +6,23 @@
   status: "answered" | "skipped";
   recordedAt: string;
   duration: number;
+  videoBlob?: Blob | null;
 };
 
 export type SavedInterviewSession = {
   interviewId: string;
   fullName: string;
+  email?: string;
+  phone?: string;
   university: string;
   course: string;
   intake: string;
   startedAt: string;
   completedAt?: string;
-  totalQuestions: number;
-  answeredCount: number;
-  skippedCount: number;
-  completionPercentage: number;
+  totalQuestions?: number;
+  answeredCount?: number;
+  skippedCount?: number;
+  completionPercentage?: number;
 };
 
 const DB_NAME = "precas-interview-db";
