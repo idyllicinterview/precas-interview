@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
@@ -774,83 +774,83 @@ await saveInterviewSession({
           </div>
         </header>
 
-        <section className="mx-auto max-w-7xl px-6 py-10">
-          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-8 shadow-2xl sm:p-10">
+        <section className="mx-auto w-full max-w-[1600px] px-5 py-4 lg:px-8">
+          <div className="grid w-full gap-5 lg:grid-cols-[1.18fr_0.82fr] xl:gap-8">
+            <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1b2d] p-5 shadow-2xl sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">
                 Pre-CAS Preparation
               </p>
 
-              <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-                Prepare for your
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                Prepare for your  
                 <span className="block text-blue-400">
                   university interview.
                 </span>
               </h1>
 
-              <p className="mt-6 text-base leading-7 text-slate-400">
+              <p className="mt-3 text-sm leading-5 text-slate-400">
                 This mock interview is designed to help you
                 practise answering university-style questions
                 naturally and confidently before your actual
                 Pre-CAS interview.
               </p>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
                   <div className="text-2xl">
                     {String.fromCodePoint(0x1f3a5)}
                   </div>
 
-                  <p className="mt-3 font-semibold">
+                  <p className="mt-1.5 text-sm font-semibold">
                     Camera & microphone
                   </p>
 
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
                     Camera and microphone recording are available
                     when your device supports them.
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
+                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
                   <div className="text-2xl">
                     {String.fromCodePoint(0x23f1)}
                   </div>
 
-                  <p className="mt-3 font-semibold">
+                  <p className="mt-1.5 text-sm font-semibold">
                     90 seconds per answer
                   </p>
 
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
                     Take a moment to think, then answer naturally
                     within the time limit.
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
+                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
                   <div className="text-2xl">
                     {String.fromCodePoint(0x2713)}
                   </div>
 
-                  <p className="mt-3 font-semibold">
+                  <p className="mt-1.5 text-sm font-semibold">
                     {interviewQuestions.length} questions
                   </p>
 
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
                     Your interview contains a randomly selected
                     set of questions.
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5">
+                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
                   <div className="text-2xl">
                     {String.fromCodePoint(0x1f504)}
                   </div>
 
-                  <p className="mt-3 font-semibold">
+                  <p className="mt-1.5 text-sm font-semibold">
                     Review & re-record
                   </p>
 
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
                     Review your answer and record it again before
                     continuing.
                   </p>
@@ -1118,8 +1118,8 @@ await saveInterviewSession({
           </div>
         </header>
 
-        <section className="mx-auto max-w-5xl px-6 py-10">
-          <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-8 shadow-2xl sm:p-10">
+        <section className="mx-auto w-full max-w-[1600px] px-6 py-6 lg:px-10">
+          <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1b2d] p-5 shadow-2xl sm:p-6">
             <div className="text-center">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 text-4xl text-green-400">
                 {String.fromCodePoint(0x2713)}
@@ -1140,7 +1140,7 @@ await saveInterviewSession({
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5 text-center">
+              <div className="rounded-xl border border-white/5 bg-[#13243a] p-3 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Answered
                 </p>
@@ -1154,7 +1154,7 @@ await saveInterviewSession({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5 text-center">
+              <div className="rounded-xl border border-white/5 bg-[#13243a] p-3 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Skipped
                 </p>
@@ -1168,7 +1168,7 @@ await saveInterviewSession({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/5 bg-[#13243a] p-5 text-center">
+              <div className="rounded-xl border border-white/5 bg-[#13243a] p-3 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Not Attempted
                 </p>
@@ -1249,7 +1249,7 @@ await saveInterviewSession({
                   return (
                     <div
                       key={`${index}-${question.question}`}
-                      className="rounded-2xl border border-white/5 bg-[#13243a] p-5"
+                      className="rounded-xl border border-white/5 bg-[#13243a] p-3"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex gap-4">
@@ -1306,7 +1306,7 @@ await saveInterviewSession({
                     return (
                       <div
                         key={`recorded-${index}`}
-                        className="rounded-2xl border border-white/5 bg-[#13243a] p-5"
+                        className="rounded-xl border border-white/5 bg-[#13243a] p-3"
                       >
                         <div className="mb-4 flex items-start gap-4">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xs font-bold text-blue-400">
@@ -1524,7 +1524,7 @@ return (
                 : "Respond naturally as if you were speaking to a university interviewer."}
             </p>
 
-            <div className="mt-8 rounded-2xl border border-white/5 bg-[#13243a] p-5">
+            <div className="mt-8 rounded-xl border border-white/5 bg-[#13243a] p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Answer tips
               </p>
