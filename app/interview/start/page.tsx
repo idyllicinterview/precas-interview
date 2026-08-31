@@ -1284,7 +1284,27 @@ await saveInterviewSession({
     &rarr;
   </span>
 </button>
+
+                <div className="mt-6 border-t border-[#e5e5e0] pt-5 text-center">
+                  <p className="text-sm font-medium text-[#17212b]">
+                    Have a suggestion or feedback?
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-[#66727d]">
+                    Help us improve your Pre-CAS interview experience.
+                  </p>
+
+                  <Link
+                    href="/interview/feedback"
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#25833a] transition hover:text-[#1d6f31]"
+                  >
+                    Share Feedback
+                    <span>
+                      &rarr;
+                    </span>
+                  </Link>
                 </div>
+              </div>
               </section>
             </div>
           </div>
@@ -1843,6 +1863,7 @@ return (
     </main>
   );
 }
+
 
 
 
