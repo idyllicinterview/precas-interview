@@ -1060,6 +1060,15 @@ await saveInterviewSession({
 
                 <div className="h-5 w-px bg-white/25" />
 
+                <Link
+                  href="/interview/uk-study"
+                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
+                >
+                  UK Study Support
+                </Link>
+
+                <div className="h-5 w-px bg-white/25" />
+
                 <p className="text-right text-sm font-bold uppercase tracking-[0.16em] text-white drop-shadow-[0_0_7px_rgba(57,168,69,0.75)] sm:text-base">
                   Pre-CAS Interview Simulator
                 </p>
@@ -1834,6 +1843,7 @@ return (
     </main>
   );
 }
+
 
 
 
