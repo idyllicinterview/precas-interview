@@ -34,6 +34,14 @@ export default function InterviewStartPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  const recordingCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const recordingAnimationRef = useRef<number | null>(null);
+
+  const videoBrandingLogo = "/idyllic-logo.png";
+
+  const videoBrandingText =
+    "This video was recorded as part of the Pre-CAS interview process for review of the student.\n\nIt is the property of Idyllic Education and may be used solely for evaluation and verification purposes.\n\nUnauthorised sharing, distribution, or reproduction is strictly prohibited.";
+
   const [interviewQuestions, setInterviewQuestions] = useState<Question[]>([]);
   const [questionStatus, setQuestionStatus] = useState<QuestionStatus[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -371,7 +379,186 @@ await saveInterviewSession({
   /*
    * REAL RECORDING
    */
-  const startRealRecording = () => {
+  /*
+   * CREATE BRANDED RECORDING STREAM
+   *
+   * The camera and microphone remain the actual source.
+   * The video is drawn onto a canvas so the saved recording
+   * contains the official Idyllic branding and recording notice.
+   */
+  const createBrandedRecordingStream = async (
+    sourceStream: MediaStream
+  ): Promise<MediaStream> => {
+    const sourceVideo = document.createElement("video");
+
+    sourceVideo.srcObject = sourceStream;
+    sourceVideo.muted = true;
+    sourceVideo.playsInline = true;
+
+    await sourceVideo.play();
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = 1280;
+    canvas.height = 720;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Unable to create recording canvas.");
+    }
+
+    const logo = new Image();
+
+    logo.src = videoBrandingLogo;
+
+    await new Promise<void>((resolve, reject) => {
+      logo.onload = () => resolve();
+      logo.onerror = () =>
+        reject(new Error("Unable to load the official logo."));
+    });
+
+    const drawFrame = () => {
+      context.drawImage(
+        sourceVideo,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      /*
+       * Official Idyllic watermark.
+       */
+      const logoWidth = 120;
+      const logoHeight =
+        (logo.naturalHeight / logo.naturalWidth) * logoWidth;
+
+      context.save();
+      context.globalAlpha = 0.85;
+
+      context.drawImage(
+        logo,
+        24,
+        24,
+        logoWidth,
+        logoHeight
+      );
+
+      context.restore();
+
+      /*
+       * Recording-purpose notice.
+       *
+       * Displayed as a readable paragraph box in the
+       * bottom-left of the saved interview recording.
+       */
+      const noticeWidth = 680;
+      const noticeHeight = 190;
+      const noticeX = 24;
+      const noticeY = canvas.height - noticeHeight - 24;
+
+      context.save();
+
+      context.fillStyle = "rgba(0, 0, 0, 0.78)";
+      context.beginPath();
+      context.roundRect(
+        noticeX,
+        noticeY,
+        noticeWidth,
+        noticeHeight,
+        18
+      );
+      context.fill();
+
+      /*
+       * Orange accent line.
+       */
+      context.fillStyle = "rgba(255, 153, 51, 0.95)";
+      context.beginPath();
+      context.roundRect(
+        noticeX + 16,
+        noticeY + 16,
+        6,
+        noticeHeight - 32,
+        3
+      );
+      context.fill();
+
+      /*
+       * Draw the notice as multiple readable paragraphs.
+       */
+      const textX = noticeX + 40;
+      const textWidth = noticeWidth - 62;
+
+      const paragraphs = videoBrandingText.split("\n\n");
+
+      let textY = noticeY + 38;
+
+      paragraphs.forEach((paragraph, paragraphIndex) => {
+        const isHeading = paragraphIndex === 0;
+
+        context.fillStyle = isHeading
+          ? "rgba(255, 255, 255, 0.96)"
+          : "rgba(255, 255, 255, 0.92)";
+
+        context.font = isHeading
+          ? "bold 18px Arial"
+          : "16px Arial";
+
+        context.textAlign = "left";
+        context.textBaseline = "top";
+
+        const words = paragraph.split(" ");
+        let line = "";
+
+        const lineHeight = isHeading ? 24 : 22;
+
+        words.forEach((word) => {
+          const testLine = line
+            ? `${line} ${word}`
+            : word;
+
+          if (
+            context.measureText(testLine).width >
+              textWidth &&
+            line
+          ) {
+            context.fillText(line, textX, textY);
+            textY += lineHeight;
+            line = word;
+          } else {
+            line = testLine;
+          }
+        });
+
+        if (line) {
+          context.fillText(line, textX, textY);
+          textY += lineHeight;
+        }
+
+        if (paragraphIndex < paragraphs.length - 1) {
+          textY += 8;
+        }
+      });
+
+      context.restore();
+
+      recordingAnimationRef.current =
+        requestAnimationFrame(drawFrame);
+    };
+
+    drawFrame();
+
+    const canvasStream = canvas.captureStream(30);
+
+    sourceStream.getAudioTracks().forEach((track) => {
+      canvasStream.addTrack(track);
+    });
+
+    return canvasStream;
+  };
+  const startRealRecording = async () => {
     if (!streamRef.current) {
       setError("Please enable the camera and microphone first.");
       return;
@@ -387,7 +574,10 @@ await saveInterviewSession({
 
       chunksRef.current = [];
 
-      const recorder = new MediaRecorder(streamRef.current);
+      const brandedStream =
+        await createBrandedRecordingStream(streamRef.current);
+
+      const recorder = new MediaRecorder(brandedStream);
 
       recorderRef.current = recorder;
 
@@ -753,350 +943,272 @@ await saveInterviewSession({
       </main>
     );
   }
-
   /*
    * PRE-INTERVIEW
    */
   if (!interviewStarted && !interviewComplete) {
     return (
-      <main className="min-h-screen bg-[#07111f] text-white">
-        <header className="border-b border-white/10 bg-[#081526]">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+      <main className="min-h-screen overflow-x-hidden bg-[#f7f5f0] text-[#17212b]">
+        <div className="relative min-h-screen">
+          {/* Official Idyllic top bar */}
+          <div className="absolute left-0 top-0 z-30 h-[72px] w-full overflow-hidden">
             <img
-              src="/idyllic-logo.png"
-              alt="Idyllic"
-              className="h-10 w-auto max-w-[200px] object-contain"
+              src="/top-bar.png"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <img
+              src="/idyllic-logo-white.png"
+              alt="Idyllic Education"
+              className="absolute left-6 top-1/2 h-12 w-auto -translate-y-1/2 object-contain sm:left-10 lg:left-14"
+            />
+          </div>
+          {/* Large London visual */}
+          <div className="pointer-events-none absolute inset-y-0 left-[14%] hidden w-[46%] overflow-hidden lg:block">
+            <img
+              src="/uk-watercolor.png"
+              alt="London"
+              className="h-full w-full object-cover object-center"
             />
 
-            <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-xs font-semibold text-blue-300">
-              Pre-CAS Mock Interview
+            <div className="absolute inset-0 bg-gradient-to-r from-[#f7f5f0] via-transparent to-[#f7f5f0]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#f7f5f0]/35 via-transparent to-transparent" />
+          </div>
+
+          {/* Main content */}
+          <div className="relative mx-auto flex min-h-screen w-full max-w-[1800px] items-center px-6 py-10 sm:px-10 lg:px-14 xl:px-20">
+            <div className="grid w-full items-center gap-12 lg:grid-cols-[1fr_520px] xl:grid-cols-[1fr_560px]">
+              
+              {/* Left editorial text */}
+              <section className="relative hidden min-h-[680px] items-start lg:flex">
+                <div className="relative z-10 max-w-[610px] pb-20">
+
+
+
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#52606d]">
+                    Pre-CAS Interview Simulator
+                  </p>
+
+                  <h1 className="mt-7 text-4xl font-semibold leading-[1.06] tracking-[-0.03em] text-[#17212b] xl:text-5xl">
+                    Practice with confidence.
+                    <br />
+                    Prepare for your{" "}
+                    <span className="text-[#243f9f]">
+                      future in the UK.
+                    </span>
+                  </h1>
+
+                  <p className="mt-7 max-w-[470px] text-base leading-7 text-[#66727d]">
+                    AI-powered mock interview simulator built to help
+                    international students succeed in their UK student visa
+                    interviews.
+                  </p>
+                </div>
+              </section>
+
+              {/* Candidate panel */}
+              <section className="relative z-20 w-full">
+                <div className="rounded-[2rem] border border-black/5 bg-white/90 p-7 shadow-[0_30px_90px_rgba(23,33,43,0.12)] backdrop-blur-xl sm:p-9 xl:p-10">
+                  
+                  <div className="mb-8">
+                    <div className="mb-5 h-[2px] w-10 bg-[#39a845]" />
+
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#687580]">
+                      Candidate Information
+                    </p>
+
+                    <h2 className="mt-3 text-3xl font-semibold tracking-[-0.025em] text-[#17212b]">
+                      Start your interview
+                    </h2>
+
+                    <p className="mt-2 text-sm text-[#7b858d]">
+                      Enter your details below. Required fields are marked
+                      with <span className="text-[#243f9f]">*</span>.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        Full Name <span className="text-[#243f9f]">*</span>
+                      </label>
+
+                      <input
+                        value={fullName}
+                        onChange={(event) =>
+                          setFullName(event.target.value)
+                        }
+                        placeholder="Your full name"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        Email Address <span className="text-[#243f9f]">*</span>
+                      </label>
+
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(event) =>
+                          setEmail(event.target.value)
+                        }
+                        placeholder="you@example.com"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        Contact Number{" "}
+                        <span className="text-[#243f9f]">*</span>
+                      </label>
+
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(event) =>
+                          setPhone(event.target.value)
+                        }
+                        placeholder="Your contact number"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        University
+                      </label>
+
+                      <input
+                        value={university}
+                        onChange={(event) =>
+                          setUniversity(event.target.value)
+                        }
+                        placeholder="Your university"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        Course
+                      </label>
+
+                      <input
+                        value={course}
+                        onChange={(event) =>
+                          setCourse(event.target.value)
+                        }
+                        placeholder="Your course"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold text-[#303b45]">
+                        Intake
+                      </label>
+
+                      <input
+                        value={intake}
+                        onChange={(event) =>
+                          setIntake(event.target.value)
+                        }
+                        placeholder="e.g. November 2026"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-7 rounded-xl border border-[#ece7e1] bg-[#faf9f7] px-4 py-3.5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold text-[#303b45]">
+                          Camera & microphone
+                        </p>
+
+                        <p className="mt-1 text-[11px] text-[#8a9298]">
+                          {cameraReady
+                            ? "Ready to record"
+                            : "Required before the interview"}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={startCamera}
+                        disabled={cameraReady}
+                        className="shrink-0 rounded-lg border border-[#b51f2b]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#b51f2b]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
+                      >
+                        {cameraReady ? "Ready" : "Check"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="mt-5 text-[11px] leading-5 text-[#8a9298]">
+                    Your information will be associated with this mock
+                    interview.
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-medium text-[#8a9298]">
+                    Interview ID:{" "}
+                    <span className="text-[#243f9f]">
+                      {interviewId}
+                    </span>
+                  </p>
+
+                  {error && (
+                    <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs leading-5 text-red-700">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={startInterview}
+                    className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#243f9f]/15 transition hover:bg-[#1d3485]"
+                  >
+                    <span>Start Interview</span>
+
+                    <span className="text-lg transition-transform group-hover:translate-x-1">
+                      ?
+                    </span>
+                  </button>
+                </div>
+              </section>
             </div>
           </div>
-        </header>
 
-        <section className="mx-auto w-full max-w-[1600px] px-5 py-4 lg:px-8">
-          <div className="grid w-full gap-5 lg:grid-cols-[1.18fr_0.82fr] xl:gap-8">
-            <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1b2d] p-5 shadow-2xl sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">
-                Pre-CAS Preparation
+          {/* Mobile introduction */}
+          <div className="px-6 pb-8 lg:hidden">
+            <div className="mx-auto max-w-xl">
+              <div className="mb-5 h-[2px] w-10 bg-[#39a845]" />
+
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#687580]">
+                Pre-CAS Interview Simulator
               </p>
 
-              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                Prepare for your  
-                <span className="block text-blue-400">
-                  university interview.
+              <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.03em] text-[#17212b]">
+                Practice with confidence.
+                <br />
+                Prepare for your{" "}
+                <span className="text-[#243f9f]">
+                  future in the UK.
                 </span>
               </h1>
 
-              <p className="mt-3 text-sm leading-5 text-slate-400">
-                This mock interview is designed to help you
-                practise answering university-style questions
-                naturally and confidently before your actual
-                Pre-CAS interview.
+              <p className="mt-5 max-w-md text-sm leading-6 text-[#66727d]">
+                AI-powered mock interview simulator built to help
+                international students succeed in their UK student visa
+                interviews.
               </p>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
-                  <div className="text-2xl">
-                    {String.fromCodePoint(0x1f3a5)}
-                  </div>
-
-                  <p className="mt-1.5 text-sm font-semibold">
-                    Camera & microphone
-                  </p>
-
-                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                    Camera and microphone recording are available
-                    when your device supports them.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
-                  <div className="text-2xl">
-                    {String.fromCodePoint(0x23f1)}
-                  </div>
-
-                  <p className="mt-1.5 text-sm font-semibold">
-                    90 seconds per answer
-                  </p>
-
-                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                    Take a moment to think, then answer naturally
-                    within the time limit.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
-                  <div className="text-2xl">
-                    {String.fromCodePoint(0x2713)}
-                  </div>
-
-                  <p className="mt-1.5 text-sm font-semibold">
-                    {interviewQuestions.length} questions
-                  </p>
-
-                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                    Your interview contains a randomly selected
-                    set of questions.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/5 bg-[#13243a] p-3">
-                  <div className="text-2xl">
-                    {String.fromCodePoint(0x1f504)}
-                  </div>
-
-                  <p className="mt-1.5 text-sm font-semibold">
-                    Review & re-record
-                  </p>
-
-                  <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                    Review your answer and record it again before
-                    continuing.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-blue-400/10 bg-blue-500/5 p-5">
-                <p className="text-sm font-semibold text-blue-300">
-                  Before you begin
-                </p>
-
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-400">
-                  <li>- Find a quiet and well-lit place.</li>
-                  <li>- Keep your face clearly visible on camera.</li>
-                  <li>
-                    - Answer in your own words rather than memorising
-                    a script.
-                  </li>
-                  <li>
-                    - Speak clearly and maintain eye contact with
-                    the camera.
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-white/10 bg-[#101f33] p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-400">
-                  Candidate Information
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  Enter your details before starting the mock interview.
-                </p>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Full Name
-                    </label>
-
-                    <input
-                      value={fullName}
-                      onChange={(event) =>
-                        setFullName(event.target.value)
-                      }
-                      placeholder="Enter your full name"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Email Address
-                    </label>
-
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(event) =>
-                        setEmail(event.target.value)
-                      }
-                      placeholder="Enter your email address"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Contact Number
-                    </label>
-
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(event) =>
-                        setPhone(event.target.value)
-                      }
-                      placeholder="Enter your contact number"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      University
-                    </label>
-
-                    <input
-                      value={university}
-                      onChange={(event) =>
-                        setUniversity(event.target.value)
-                      }
-                      placeholder="Enter your university"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Course
-                    </label>
-
-                    <input
-                      value={course}
-                      onChange={(event) =>
-                        setCourse(event.target.value)
-                      }
-                      placeholder="Enter your course"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Intake
-                    </label>
-
-                    <input
-                      value={intake}
-                      onChange={(event) =>
-                        setIntake(event.target.value)
-                      }
-                      placeholder="e.g. November 2026"
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1829] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <p className="mt-4 text-xs text-slate-500">
-                  Your information will be associated with this mock
-                  interview.
-                </p>
-
-                <p className="mt-2 text-xs font-semibold text-blue-400">
-                  Interview ID: {interviewId}
-                </p>
-              </div>
-
-              {error && (
-                <div className="mt-6 rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm leading-6 text-red-300">
-                  {error}
-                </div>
-              )}
-
-              <button
-                onClick={startInterview}
-                className="mt-8 w-full rounded-xl bg-blue-600 px-8 py-4 font-semibold shadow-lg shadow-blue-600/20 transition hover:bg-blue-500"
-              >
-                Start Interview
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-2xl">
-                <div className="relative aspect-video">
-                  {cameraReady ? (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      muted
-                      playsInline
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0c1b2e] to-[#07111f]">
-                      <div className="px-6 text-center">
-                        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/10 bg-blue-500/5 text-3xl">
-                          {String.fromCodePoint(0x1f3a5)}
-                        </div>
-
-                        <p className="font-semibold">
-                          Camera preview
-                        </p>
-
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          Enable your camera and microphone before starting the interview.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={startCamera}
-                disabled={cameraReady}
-                className="w-full rounded-xl border border-white/10 bg-[#0d1b2d] px-6 py-3 font-semibold text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {cameraReady
-                  ? "Camera & Microphone Ready"
-                  : "Enable Camera & Microphone"}
-              </button>
-
-              <div className="rounded-[2rem] border border-white/10 bg-[#0d1b2d] p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Interview format
-                </p>
-
-                <div className="mt-5 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <span className="text-sm text-slate-400">
-                      Questions
-                    </span>
-
-                    <span className="font-semibold">
-                      16
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <span className="text-sm text-slate-400">
-                      Preparation
-                    </span>
-
-                    <span className="font-semibold">
-                      15 seconds
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <span className="text-sm text-slate-400">
-                      Time per answer
-                    </span>
-
-                    <span className="font-semibold">
-                      90 seconds
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400">
-                      Recording
-                    </span>
-
-                    <span className="font-semibold text-green-400">
-                      "Video + Audio"
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
-        </section>
+        </div>
       </main>
     );
   }
+
 
   /*
    * COMPLETE SCREEN
@@ -1621,6 +1733,25 @@ return (
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
