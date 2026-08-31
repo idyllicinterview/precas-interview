@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import Link from "next/link";
 
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
@@ -14,6 +16,7 @@ import {
 import {
   saveInterviewAnswer,
   saveInterviewSession,
+  getSavedInterviewAnswers,
   clearSavedInterviewAnswers,
 } from "@/app/interview/lib/interviewStorage";
 
@@ -36,6 +39,8 @@ export default function InterviewStartPage() {
 
   const recordingCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const recordingAnimationRef = useRef<number | null>(null);
+
+  const parallaxImageRef = useRef<HTMLImageElement | null>(null);
 
   const videoBrandingLogo = "/idyllic-logo.png";
 
@@ -94,6 +99,86 @@ export default function InterviewStartPage() {
   }, []);
 
   /*
+   * LOAD SAVED ANSWERS
+   */
+  useEffect(() => {
+    if (!interviewComplete) {
+      return;
+    }
+
+    let active = true;
+
+    const loadSavedAnswers = async () => {
+      try {
+        const answers = await getSavedInterviewAnswers();
+
+        if (!active) {
+          return;
+        }
+
+        const restoredVideos: Record<number, string> = {};
+
+        answers.forEach((answer) => {
+          if (answer.interviewId !== interviewId || !answer.videoBlob) {
+            return;
+          }
+
+          restoredVideos[answer.questionIndex] = URL.createObjectURL(
+            answer.videoBlob
+          );
+        });
+
+        setRecordedVideos(restoredVideos);
+      } catch (loadError) {
+        console.error("Unable to load saved interview answers:", loadError);
+      }
+    };
+
+    loadSavedAnswers();
+
+    return () => {
+      active = false;
+    };
+  }, [interviewComplete, interviewId]);
+  /*
+ * FIRST PAGE PARALLAX EFFECT
+ */
+useEffect(() => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+  if (!mediaQuery.matches) {
+    return;
+  }
+
+  const handleMouseMove = (event: MouseEvent) => {
+    const image = parallaxImageRef.current;
+
+    if (!image) {
+      return;
+    }
+
+    const x =
+      (event.clientX / window.innerWidth - 0.5) * 35;
+
+    const y =
+      (event.clientY / window.innerHeight - 0.5) * 35;
+
+    image.style.transform =
+      `translate3d(${x}px, ${y}px, 0) scale(1.06)`;
+  };
+
+  window.addEventListener("mousemove", handleMouseMove);
+
+  return () => {
+    window.removeEventListener("mousemove", handleMouseMove);
+  };
+}, []);
+  
+/*
    * TIMER
    */
   useEffect(() => {
@@ -950,27 +1035,49 @@ await saveInterviewSession({
     return (
       <main className="min-h-screen overflow-x-hidden bg-[#f7f5f0] text-[#17212b]">
         <div className="relative min-h-screen">
-          {/* Official Idyllic top bar */}
+                    {/* Official Idyllic top bar */}
           <div className="absolute left-0 top-0 z-30 h-[72px] w-full overflow-hidden">
             <img
               src="/top-bar.png"
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-center"
             />
+
             <img
               src="/idyllic-logo-white.png"
               alt="Idyllic Education"
               className="absolute left-6 top-1/2 h-12 w-auto -translate-y-1/2 object-contain sm:left-10 lg:left-14"
             />
+
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 sm:right-10 lg:right-14">
+              <div className="flex items-center gap-5 sm:gap-7">
+                <Link
+                  href="/interview/answers"
+                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
+                >
+                  Answer Reference
+                </Link>
+
+                <div className="h-5 w-px bg-white/25" />
+
+                <p className="text-right text-sm font-bold uppercase tracking-[0.16em] text-white drop-shadow-[0_0_7px_rgba(57,168,69,0.75)] sm:text-base">
+                  Pre-CAS Interview Simulator
+                </p>
+              </div>
+            </div>
           </div>
           {/* Large London visual */}
           <div className="pointer-events-none absolute inset-y-0 left-[14%] hidden w-[46%] overflow-hidden lg:block">
             <img
-              src="/uk-watercolor.png"
-              alt="London"
-              className="h-full w-full object-cover object-center"
-            />
-
+  ref={parallaxImageRef}
+  src="/uk-watercolor.png"
+  alt="London"
+  className="h-full w-full object-cover object-center"
+  style={{
+    transition: "transform 180ms ease-out",
+    willChange: "transform",
+  }}
+/>
             <div className="absolute inset-0 bg-gradient-to-r from-[#f7f5f0] via-transparent to-[#f7f5f0]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#f7f5f0]/35 via-transparent to-transparent" />
           </div>
@@ -982,12 +1089,6 @@ await saveInterviewSession({
               {/* Left editorial text */}
               <section className="relative hidden min-h-[680px] items-start lg:flex">
                 <div className="relative z-10 max-w-[610px] pb-20">
-
-
-
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#52606d]">
-                    Pre-CAS Interview Simulator
-                  </p>
 
                   <h1 className="mt-7 text-4xl font-semibold leading-[1.06] tracking-[-0.03em] text-[#17212b] xl:text-5xl">
                     Practice with confidence.
@@ -1165,15 +1266,15 @@ await saveInterviewSession({
                   )}
 
                   <button
-                    onClick={startInterview}
-                    className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#243f9f]/15 transition hover:bg-[#1d3485]"
-                  >
-                    <span>Start Interview</span>
+  onClick={startInterview}
+  className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#243f9f]/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1d3485] hover:shadow-xl hover:shadow-[#243f9f]/20 active:translate-y-0"
+>
+  <span>Start Interview</span>
 
-                    <span className="text-lg transition-transform group-hover:translate-x-1">
-                      ?
-                    </span>
-                  </button>
+  <span className="text-lg transition-transform duration-300 group-hover:translate-x-1">
+    &rarr;
+  </span>
+</button>
                 </div>
               </section>
             </div>
@@ -1733,6 +1834,18 @@ return (
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
