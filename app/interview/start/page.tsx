@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -69,6 +69,40 @@ export default function InterviewStartPage() {
   const [savingAnswer, setSavingAnswer] = useState(false);
 
   const [interviewStarted, setInterviewStarted] = useState(false);
+
+  const [timeOfDay, setTimeOfDay] = useState<
+    "morning" | "day" | "evening" | "night"
+  >("day");
+
+  /*
+   * FIRST PAGE TIME-OF-DAY DETECTION
+   */
+  useEffect(() => {
+    const updateTimeOfDay = () => {
+      const hour = new Date().getHours();
+
+      if (hour >= 5 && hour < 12) {
+        setTimeOfDay("morning");
+      } else if (hour >= 12 && hour < 17) {
+        setTimeOfDay("day");
+      } else if (hour >= 17 && hour < 20) {
+        setTimeOfDay("evening");
+      } else {
+        setTimeOfDay("night");
+      }
+    };
+
+    updateTimeOfDay();
+
+    const interval = window.setInterval(
+      updateTimeOfDay,
+      60 * 1000
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
   const [interviewStartedAt, setInterviewStartedAt] = useState<string | null>(
     null
   );
@@ -78,7 +112,46 @@ export default function InterviewStartPage() {
   const [phone, setPhone] = useState("");
   const [university, setUniversity] = useState("");
   const [course, setCourse] = useState("");
+const ukInsights = [
+    { category: "UK Insight", title: "A country of four nations", description: "England, Scotland, Wales and Northern Ireland each bring their own character and culture." },
+    { category: "UK Insight", title: "A truly international destination", description: "Students from many different countries choose the UK for higher education each year." },
+    { category: "UK Insight", title: "A tradition of learning", description: "The UK has a long history of universities, scholarship and academic discovery." },
+    { category: "UK Insight", title: "Education across diverse communities", description: "UK campuses bring together students with different backgrounds, experiences and perspectives." },
+    { category: "UK Insight", title: "Four nations, many experiences", description: "Studying in the UK can introduce you to different cities, communities and cultural traditions." },
+
+    { category: "Why the UK?", title: "Globally recognised education", description: "UK qualifications are widely recognised and can support students pursuing international careers." },
+    { category: "Why the UK?", title: "A wide choice of courses", description: "Students can choose from a broad range of subjects, disciplines and areas of specialisation." },
+    { category: "Why the UK?", title: "Develop independent thinking", description: "Many UK courses encourage students to analyse ideas, solve problems and express their own views." },
+    { category: "Why the UK?", title: "Learn in an international environment", description: "UK universities welcome students from around the world, creating diverse learning communities." },
+    { category: "Why the UK?", title: "Connect study with your future", description: "Many courses combine academic learning with practical skills that can support future career goals." },
+
+    { category: "Did You Know?", title: "The UK has four nations", description: "The United Kingdom is made up of England, Scotland, Wales and Northern Ireland." },
+    { category: "Did You Know?", title: "Oxford and Cambridge have centuries of history", description: "The universities of Oxford and Cambridge have been teaching students for many centuries." },
+    { category: "Did You Know?", title: "English has global reach", description: "English is used internationally in education, business, science, technology and communication." },
+    { category: "Did You Know?", title: "The UK has shaped modern science", description: "Researchers and universities across the UK have contributed to discoveries in many scientific fields." },
+    { category: "Did You Know?", title: "Academic history is everywhere", description: "Many UK university cities combine historic academic traditions with modern student life." },
+
+    { category: "Your UK Journey", title: "Learn beyond the classroom", description: "University life can give you opportunities to develop knowledge, confidence and practical skills." },
+    { category: "Your UK Journey", title: "Build confidence", description: "Living and studying in a new environment can help you become more independent and adaptable." },
+    { category: "Your UK Journey", title: "Meet people from around the world", description: "International university communities can introduce you to new perspectives, cultures and friendships." },
+    { category: "Your UK Journey", title: "Prepare for your future", description: "Your university experience can help you develop skills and knowledge for the next stage of your career." },
+    { category: "Your UK Journey", title: "Experience a different academic culture", description: "Studying in the UK can give you a new perspective on learning, research and academic discussion." },
+
+    { category: "Explore the UK", title: "Discover historic cities", description: "The UK is home to cities where centuries of history meet modern student communities." },
+    { category: "Explore the UK", title: "Museums, landmarks and culture", description: "Students can explore a wide range of museums, galleries, landmarks and cultural attractions." },
+    { category: "Explore the UK", title: "Different cultures across one country", description: "Each part of the UK has its own traditions, landscapes, communities and cultural character." },
+    { category: "Explore the UK", title: "Cities and countryside", description: "From busy university cities to peaceful countryside and coastlines, the UK offers varied surroundings." },
+    { category: "Explore the UK", title: "Make your own UK experience", description: "Your time in the UK can be about more than studying � it can also be about discovering new places and experiences." },
+  ];
+
   const [intake, setIntake] = useState("");
+
+  const [selectedUkInsight, setSelectedUkInsight] = useState(ukInsights[0]);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * ukInsights.length);
+    setSelectedUkInsight(ukInsights[randomIndex]);
+  }, []);
 
   const [interviewId] = useState(
     () =>
@@ -87,6 +160,7 @@ export default function InterviewStartPage() {
       "-" +
       Math.random().toString(36).substring(2, 8).toUpperCase()
   );
+
 
   /*
    * LOAD QUESTIONS
@@ -1033,7 +1107,17 @@ await saveInterviewSession({
    */
   if (!interviewStarted && !interviewComplete) {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-[#f7f5f0] text-[#17212b]">
+      <main
+        className={`min-h-screen overflow-x-hidden text-[#17212b] transition-colors duration-1000 ${
+          timeOfDay === "morning"
+            ? "bg-gradient-to-br from-[#fffdf5] via-[#f7f8f2] to-[#eaf5f4]"
+            : timeOfDay === "day"
+              ? "bg-gradient-to-br from-[#f7f5f0] via-[#f8faf7] to-[#edf4f1]"
+              : timeOfDay === "evening"
+                ? "bg-gradient-to-br from-[#f7eee5] via-[#f3e8df] to-[#e5e9e8]"
+                : "bg-gradient-to-br from-[#101a25] via-[#162b35] to-[#0b3433]"
+        }`}
+      >
         <div className="relative min-h-screen">
                     {/* Official Idyllic top bar */}
           <div className="absolute left-0 top-0 z-30 h-[72px] w-full overflow-hidden">
@@ -1049,7 +1133,7 @@ await saveInterviewSession({
               className="absolute left-6 top-1/2 h-12 w-auto -translate-y-1/2 object-contain sm:left-10 lg:left-14"
             />
 
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 sm:right-10 lg:right-14">
+            <div className="absolute right-6 top-1/2 hidden -translate-y-1/2 sm:block sm:right-10 lg:right-14">
               <div className="flex items-center gap-5 sm:gap-7">
                 <Link
                   href="/interview/answers"
@@ -1078,24 +1162,15 @@ await saveInterviewSession({
 
                 <div className="h-5 w-px bg-white/25" />
 
-                <p className="text-right text-sm font-bold uppercase tracking-[0.16em] text-white drop-shadow-[0_0_7px_rgba(57,168,69,0.75)] sm:text-base">
+                <p className="rounded-lg bg-white/10 px-4 py-2 text-right text-sm font-bold uppercase tracking-[0.16em] text-white sm:text-base">
                   Pre-CAS Interview Simulator
                 </p>
               </div>
             </div>
           </div>
           {/* Large London visual */}
-          <div className="pointer-events-none absolute inset-y-0 left-[14%] hidden w-[46%] overflow-hidden lg:block">
-            <img
-  ref={parallaxImageRef}
-  src="/uk-watercolor.png"
-  alt="London"
-  className="h-full w-full object-cover object-center"
-  style={{
-    transition: "transform 180ms ease-out",
-    willChange: "transform",
-  }}
-/>
+          <div className="pointer-events-none absolute inset-y-0 left-[14%] hidden w-[46%] overflow-hidden lg:block" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}>
+            <img ref={parallaxImageRef} src="/uk-watercolor.png" alt="London" className="h-full w-full object-cover object-center" style={{ transition: "transform 180ms ease-out", willChange: "transform", maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)" }} />
             <div className="absolute inset-0 bg-gradient-to-r from-[#f7f5f0] via-transparent to-[#f7f5f0]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#f7f5f0]/35 via-transparent to-transparent" />
           </div>
@@ -1108,7 +1183,7 @@ await saveInterviewSession({
               <section className="relative hidden min-h-[680px] items-start lg:flex">
                 <div className="relative z-10 max-w-[610px] pb-20">
 
-                  <h1 className="mt-7 text-4xl font-semibold leading-[1.06] tracking-[-0.03em] text-[#17212b] xl:text-5xl">
+                  <h1 className="mt-7 text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.035em] text-[#17212b] xl:text-[3.35rem]">
                     Practice with confidence.
                     <br />
                     Prepare for your{" "}
@@ -1117,26 +1192,37 @@ await saveInterviewSession({
                     </span>
                   </h1>
 
-                  <p className="mt-7 max-w-[470px] text-base leading-7 text-[#66727d]">
+                  <p className="mt-6 max-w-[470px] text-base leading-7 text-[#66727d]">
                     AI-powered mock interview simulator built to help
                     international students succeed in their UK student visa
                     interviews.
                   </p>
+
+                  <div className="mt-64 max-w-[430px]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#53616b]">
+                      {selectedUkInsight.category}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold leading-5 text-[#17212b]">
+                      {selectedUkInsight.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#596873]">
+                      {selectedUkInsight.description}
+                    </p>
+                  </div>
                 </div>
               </section>
 
               {/* Candidate panel */}
               <section className="relative z-20 w-full">
-                <div className="rounded-[2rem] border border-black/5 bg-white/90 p-7 shadow-[0_30px_90px_rgba(23,33,43,0.12)] backdrop-blur-xl sm:p-9 xl:p-10">
+                <div className="rounded-[2rem] border border-black/5 bg-white/90 px-7 pb-7 pt-9 shadow-[0_30px_90px_rgba(23,33,43,0.12)] backdrop-blur-xl sm:p-9 xl:p-10">
                   
                   <div className="mb-8">
-                    <div className="mb-5 h-[2px] w-10 bg-[#39a845]" />
 
                     <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#687580]">
                       Candidate Information
                     </p>
 
-                    <h2 className="mt-3 text-3xl font-semibold tracking-[-0.025em] text-[#17212b]">
+                    <h2 className="mt-2 text-3xl font-semibold tracking-[-0.025em] text-[#17212b]">
                       Start your interview
                     </h2>
 
@@ -1158,7 +1244,7 @@ await saveInterviewSession({
                           setFullName(event.target.value)
                         }
                         placeholder="Your full name"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
 
@@ -1174,7 +1260,7 @@ await saveInterviewSession({
                           setEmail(event.target.value)
                         }
                         placeholder="you@example.com"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
 
@@ -1191,7 +1277,7 @@ await saveInterviewSession({
                           setPhone(event.target.value)
                         }
                         placeholder="Your contact number"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
 
@@ -1206,7 +1292,7 @@ await saveInterviewSession({
                           setUniversity(event.target.value)
                         }
                         placeholder="Your university"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
 
@@ -1221,7 +1307,7 @@ await saveInterviewSession({
                           setCourse(event.target.value)
                         }
                         placeholder="Your course"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
 
@@ -1236,12 +1322,12 @@ await saveInterviewSession({
                           setIntake(event.target.value)
                         }
                         placeholder="e.g. November 2026"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
                     </div>
                   </div>
 
-                  <div className="mt-7 rounded-xl border border-[#ece7e1] bg-[#faf9f7] px-4 py-3.5">
+                  <div className="mt-7 rounded-xl border border-[#e3e8f5] bg-[#f7f9ff] px-4 py-3.5">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-xs font-semibold text-[#303b45]">
@@ -1258,7 +1344,7 @@ await saveInterviewSession({
                       <button
                         onClick={startCamera}
                         disabled={cameraReady}
-                        className="shrink-0 rounded-lg border border-[#b51f2b]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#b51f2b]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
+                        className="shrink-0 rounded-lg border border-[#243f9f]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#243f9f]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
                       >
                         {cameraReady ? "Ready" : "Check"}
                       </button>
@@ -1285,7 +1371,7 @@ await saveInterviewSession({
 
                   <button
   onClick={startInterview}
-  className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#243f9f]/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1d3485] hover:shadow-xl hover:shadow-[#243f9f]/20 active:translate-y-0"
+  className="group mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(36,63,159,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1d3485] hover:shadow-xl hover:shadow-[#243f9f]/20 active:translate-y-0"
 >
   <span>Start Interview</span>
 
@@ -1321,7 +1407,6 @@ await saveInterviewSession({
           {/* Mobile introduction */}
           <div className="px-6 pb-8 lg:hidden">
             <div className="mx-auto max-w-xl">
-              <div className="mb-5 h-[2px] w-10 bg-[#39a845]" />
 
               <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#687580]">
                 Pre-CAS Interview Simulator
@@ -1340,7 +1425,19 @@ await saveInterviewSession({
                 AI-powered mock interview simulator built to help
                 international students succeed in their UK student visa
                 interviews.
-              </p>
+                  </p>
+
+                  <div className="mt-64 max-w-[430px]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#53616b]">
+                      {selectedUkInsight.category}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold leading-5 text-[#17212b]">
+                      {selectedUkInsight.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#596873]">
+                      {selectedUkInsight.description}
+                    </p>
+                  </div>
             </div>
           </div>
         </div>
@@ -1872,6 +1969,30 @@ return (
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

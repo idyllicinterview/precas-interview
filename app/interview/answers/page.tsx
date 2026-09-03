@@ -1,13 +1,23 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { interviewQuestions } from "@/data/questions";
 import { answerReferences } from "@/data/answerReferences";
 
 export default function AnswerReferencePage() {
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(1);
+  const [showAirplane, setShowAirplane] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowAirplane(true);
+
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
 
   const questionsWithAnswers = answerReferences
     .map((reference) => {
@@ -30,6 +40,54 @@ export default function AnswerReferencePage() {
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] text-[#17212b]">
+
+      {showAirplane && (
+        <>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 z-[100] overflow-hidden"
+          >
+            <img
+              src="/airplane.png"
+              alt=""
+              className="absolute w-[30vw] max-w-[520px] min-w-[180px] animate-answer-reference-flight"
+            />
+          </div>
+          <style jsx global>{`
+            @keyframes answer-reference-flight {
+              0% {
+                left: -32vw;
+                bottom: -18vh;
+                opacity: 0;
+                transform: rotate(-14deg) scale(0.96);
+              }
+              8% {
+                opacity: 1;
+              }
+              92% {
+                opacity: 1;
+              }
+              100% {
+                left: 108vw;
+                bottom: 112vh;
+                opacity: 0;
+                transform: rotate(-14deg) scale(1);
+              }
+            }
+
+            .animate-answer-reference-flight {
+              animation: answer-reference-flight 2.5s linear forwards;
+            }
+
+            @media (max-width: 640px) {
+              .animate-answer-reference-flight {
+                width: 42vw;
+                min-width: 150px;
+              }
+            }
+          `}</style>
+        </>
+      )}
       {/* Fixed official Idyllic top bar */}
       <header className="fixed inset-x-0 top-0 z-50 h-[72px] border-b border-white/10 bg-gradient-to-r from-[#1d3040] via-[#173d4b] to-[#126d68] shadow-lg">
         <div className="mx-auto flex h-full w-full items-center justify-between px-6 sm:px-10 lg:px-14">
@@ -241,3 +299,5 @@ export default function AnswerReferencePage() {
     </main>
   );
 }
+
+
