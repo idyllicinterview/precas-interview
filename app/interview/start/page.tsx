@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -14,6 +14,7 @@ import {
 } from "@/data/questions";
 
 import {
+  getInterviewSession,
   saveInterviewAnswer,
   saveInterviewSession,
   getSavedInterviewAnswers,
@@ -141,7 +142,7 @@ const ukInsights = [
     { category: "Explore the UK", title: "Museums, landmarks and culture", description: "Students can explore a wide range of museums, galleries, landmarks and cultural attractions." },
     { category: "Explore the UK", title: "Different cultures across one country", description: "Each part of the UK has its own traditions, landscapes, communities and cultural character." },
     { category: "Explore the UK", title: "Cities and countryside", description: "From busy university cities to peaceful countryside and coastlines, the UK offers varied surroundings." },
-    { category: "Explore the UK", title: "Make your own UK experience", description: "Your time in the UK can be about more than studying � it can also be about discovering new places and experiences." },
+    { category: "Explore the UK", title: "Make your own UK experience", description: "Your time in the UK can be about more than studying   it can also be about discovering new places and experiences." },
   ];
 
   const [intake, setIntake] = useState("");
@@ -153,19 +154,115 @@ const ukInsights = [
     setSelectedUkInsight(ukInsights[randomIndex]);
   }, []);
 
-  const [interviewId] = useState(
-    () =>
-      "PRECAS-" +
-      new Date().getFullYear() +
-      "-" +
-      Math.random().toString(36).substring(2, 8).toUpperCase()
-  );
+  const [interviewId] = useState(() => { if (typeof window !== "undefined") { const existingId = sessionStorage.getItem("precas-active-interview-id"); if (existingId) { return existingId; } } const newId = "PRECAS-" + new Date().getFullYear() + "-" + Math.random().toString(36).substring(2, 8).toUpperCase(); if (typeof window !== "undefined") { sessionStorage.setItem("precas-active-interview-id", newId); } return newId; });
 
+
+  /*
+   * RESTORE ACTIVE INTERVIEW SESSION
+   */
+  useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+      try {
+        const savedSession = await getInterviewSession(interviewId);
+
+        if (!active || !savedSession) {
+          return;
+        }
+
+        setInterviewStartedAt(savedSession.startedAt);
+        setInterviewStarted(true);
+      } catch (loadError) {
+        console.error(
+          "Unable to restore active interview session:",
+          loadError
+        );
+      }
+    };
+
+    restoreSession();
+
+        return () => {
+      active = false;
+    };
+  }, [interviewId]);
+
+  /*
+   * RESTORE CURRENT QUESTION
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedQuestionIndex = sessionStorage.getItem(
+      "precas-active-interview-current-question"
+    );
+
+    if (savedQuestionIndex !== null) {
+      const parsedIndex = Number(savedQuestionIndex);
+
+      if (Number.isInteger(parsedIndex) && parsedIndex >= 0) {
+        setCurrentQuestion(parsedIndex);
+      }
+    }
+  }, []);
+
+  /*
+ * SAVE CURRENT QUESTION
+ */
+useEffect(() => {
+  if (typeof window === "undefined" || !interviewStarted) {
+    return;
+  }
+
+  sessionStorage.setItem(
+    "precas-active-interview-current-question",
+    String(currentQuestion)
+  );
+}, [currentQuestion, interviewStarted]);
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    sessionStorage.setItem(
+      "precas-active-interview-current-question",
+      String(currentQuestion)
+    );
+  }, [currentQuestion]);
 
   /*
    * LOAD QUESTIONS
    */
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedQuestions = sessionStorage.getItem(
+        "precas-active-interview-questions"
+      );
+
+      if (savedQuestions) {
+        try {
+          const questions = JSON.parse(savedQuestions) as Question[];
+
+          setInterviewQuestions(questions);
+          setQuestionStatus(
+            questions.map(() => "unanswered")
+          );
+          return;
+        } catch (loadError) {
+          console.error(
+            "Unable to restore saved interview questions:",
+            loadError
+          );
+          sessionStorage.removeItem(
+            "precas-active-interview-questions"
+          );
+        }
+      }
+    }
+
     const questions = getRandomInterviewQuestions();
 
     setInterviewQuestions(questions);
@@ -502,6 +599,12 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
     }
 
     setInterviewQuestions(combinedQuestions);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(
+        "precas-active-interview-questions",
+        JSON.stringify(combinedQuestions)
+      );
+    }
 
     setQuestionStatus(
       combinedQuestions.map(() => "unanswered")
@@ -524,7 +627,8 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
 await saveInterviewSession({
   interviewId,
   fullName: fullName.trim(),
-  phone: phoneDigits,
+email: email.trim(),
+phone: phoneDigits,
   university: university.trim(),
   course: course.trim(),
   intake: intake.trim(),
@@ -770,6 +874,42 @@ await saveInterviewSession({
           if (question) {
             setSavingAnswer(true);
 
+            /*
+             * PERMANENT VERCEL BLOB UPLOAD
+             */
+            const { upload } = await import("@vercel/blob/client");
+
+            const blobPath =
+              `interviews/${interviewId}/` +
+              `Q${String(currentQuestion + 1).padStart(2, "0")}.webm`;
+
+         const uploadedBlob = await upload(blobPath, blob, {
+  access: "private",
+  handleUploadUrl: "/api/interview/upload",
+  contentType: "video/webm",
+});
+
+/*
+ * KEEP TRACK OF THE PERMANENT BLOB PATH
+ */
+const storageKey = `precas-interview-blob-paths-${interviewId}`;
+
+const existingPaths = JSON.parse(
+  sessionStorage.getItem(storageKey) ?? "[]"
+) as string[];
+
+if (!existingPaths.includes(uploadedBlob.pathname)) {
+  existingPaths.push(uploadedBlob.pathname);
+}
+
+sessionStorage.setItem(
+  storageKey,
+  JSON.stringify(existingPaths)
+);
+
+            /*
+             * KEEP EXISTING LOCAL SAVE
+             */
             const answerTime = question.answerTime ?? 90;
 
             await saveInterviewAnswer(
@@ -787,7 +927,7 @@ await saveInterviewSession({
           }
         } catch (saveError) {
           console.error(
-            "Unable to save recorded interview answer:",
+            "Unable to save or upload recorded interview answer:",
             saveError
           );
         } finally {
@@ -812,16 +952,80 @@ await saveInterviewSession({
             nextQuestion?.preparationTime ?? 15
           );
         } else {
-          /*
-           * Question 16 is complete.
-           * Stop the interview and show the final
-           * recording review screen.
-           */
-          setInterviewComplete(true);
-          setInterviewStarted(false);
-          setInterviewPhase("preparation");
-          setSeconds(0);
-        }
+  /*
+   * Question 16 is complete.
+   * Create the permanent interview manifest
+   * before showing the final completion screen.
+   */
+  try {
+    const storageKey = `precas-interview-blob-paths-${interviewId}`;
+
+    const blobPaths = JSON.parse(
+      sessionStorage.getItem(storageKey) ?? "[]"
+    ) as string[];
+
+    if (blobPaths.length !== 16) {
+      throw new Error(
+        `Expected 16 uploaded videos, but found ${blobPaths.length}.`
+      );
+    }
+
+    const manifestResponse = await fetch(
+      "/api/interview/manifest",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          interviewId,
+          fullName: fullName.trim(),
+          email: email.trim(),
+          blobPaths,
+        }),
+      }
+    );
+if (!manifestResponse.ok) {
+  const manifestError = await manifestResponse.json();
+
+  throw new Error(
+    manifestError.error ??
+      "Unable to create the interview manifest."
+  );
+}
+
+const manifestResult = await manifestResponse.json();
+
+if (
+  typeof manifestResult.accessToken !== "string" ||
+  !manifestResult.accessToken
+) {
+  throw new Error(
+    "Interview manifest was created without a download token."
+  );
+}
+
+sessionStorage.setItem(
+  `precas-interview-download-token-${interviewId}`,
+  manifestResult.accessToken
+);
+
+
+    setInterviewComplete(true);
+    setInterviewStarted(false);
+    setInterviewPhase("preparation");
+    setSeconds(0);
+  } catch (manifestError) {
+    console.error(
+      "Unable to finalize interview manifest:",
+      manifestError
+    );
+
+    setError(
+      "Your recordings were uploaded, but we could not finalize the interview. Please do not close this page."
+    );
+  }
+}
       };
       recorder.start();
 
@@ -1969,6 +2173,10 @@ return (
     </main>
   );
 }
+
+
+
+
 
 
 
