@@ -112,6 +112,150 @@ export default function InterviewStartPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [university, setUniversity] = useState("");
+  const [universitySearch, setUniversitySearch] = useState("");
+  const [universityOpen, setUniversityOpen] = useState(false);
+const ukUniversities = [
+  "Abertay University",
+  "Aberystwyth University",
+  "Anglia Ruskin University",
+  "Arden University",
+  "Arts University Bournemouth",
+  "Arts University Plymouth",
+  "Aston University",
+  "Bangor University",
+  "Bath Spa University",
+  "Birkbeck, University of London",
+  "Birmingham City University",
+  "Birmingham Newman University",
+  "Bournemouth University",
+  "Brunel University London",
+  "Buckinghamshire New University",
+  "Canterbury Christ Church University",
+  "Cardiff Metropolitan University",
+  "Cardiff University",
+  "City St George’s, University of London",
+  "Coventry University",
+  "Cranfield University",
+  "De Montfort University",
+  "Durham University",
+  "Edge Hill University",
+  "Edinburgh Napier University",
+  "Falmouth University",
+  "Glasgow Caledonian University",
+  "Goldsmiths, University of London",
+  "Harper Adams University",
+  "Hartpury University",
+  "Heriot-Watt University",
+  "Imperial College London",
+  "Keele University",
+  "Kingston University",
+  "King’s College London",
+  "Lancaster University",
+  "Leeds Beckett University",
+  "Leeds Trinity University",
+  "Lincoln Bishop University",
+  "Liverpool Hope University",
+  "Liverpool John Moores University",
+  "London Metropolitan University",
+  "London School of Economics and Political Science",
+  "London South Bank University",
+  "Loughborough University",
+  "Manchester Metropolitan University",
+  "Middlesex University",
+  "Newcastle University",
+  "Northumbria University",
+  "Norwich University of the Arts",
+  "Nottingham Trent University",
+  "Oxford Brookes University",
+  "Plymouth Marjon University",
+  "Queen Margaret University",
+  "Queen Mary University of London",
+  "Queen’s University Belfast",
+  "Ravensbourne University London",
+  "Regent’s University London",
+  "Robert Gordon University",
+  "Royal Central School of Speech & Drama",
+  "Royal College of Art",
+  "Royal College of Music",
+  "Royal Holloway, University of London",
+  "Royal Veterinary College",
+  "Sheffield Hallam University",
+  "SOAS University of London",
+  "Solent University",
+  "St Mary’s University, Twickenham",
+  "Swansea University",
+  "Teesside University",
+  "The Open University",
+  "Ulster University",
+  "University College London",
+  "University for the Creative Arts",
+  "University of Aberdeen",
+  "University of Bath",
+  "University of Bedfordshire",
+  "University of Birmingham",
+  "University of Bradford",
+  "University of Brighton",
+  "University of Bristol",
+  "University of Buckingham",
+  "University of Cambridge",
+  "University of Chester",
+  "University of Chichester",
+  "University of Cumbria",
+  "University of Derby",
+  "University of Dundee",
+  "University of East Anglia",
+  "University of East London",
+  "University of Edinburgh",
+  "University of Essex",
+  "University of Exeter",
+  "University of Glasgow",
+  "University of Gloucestershire",
+  "University of Greater Manchester",
+  "University of Greenwich",
+  "University of Hertfordshire",
+  "University of Huddersfield",
+  "University of Hull",
+  "University of Kent",
+  "University of Lancashire",
+  "University of Leeds",
+  "University of Leicester",
+  "University of Lincoln",
+  "University of Liverpool",
+  "University of Manchester",
+  "University of Northampton",
+  "University of Nottingham",
+  "University of Oxford",
+  "University of Plymouth",
+  "University of Portsmouth",
+  "University of Reading",
+  "University of Roehampton",
+  "University of Salford",
+  "University of Sheffield",
+  "University of South Wales",
+  "University of Southampton",
+  "University of St Andrews",
+  "University of Staffordshire",
+  "University of Stirling",
+  "University of Strathclyde",
+  "University of Suffolk",
+  "University of Sunderland",
+  "University of Surrey",
+  "University of Sussex",
+  "University of the Arts London",
+  "University of the Highlands and Islands",
+  "University of the West of England, Bristol",
+  "University of the West of Scotland",
+  "University of Wales Trinity Saint David",
+  "University of Warwick",
+  "University of West London",
+  "University of Westminster",
+  "University of Winchester",
+  "University of Wolverhampton",
+  "University of Worcester",
+  "University of York",
+  "Wrexham University",
+  "York St John University",
+];
   const [course, setCourse] = useState("");
 const ukInsights = [
     { category: "UK Insight", title: "A country of four nations", description: "England, Scotland, Wales and Northern Ireland each bring their own character and culture." },
@@ -154,7 +298,7 @@ const ukInsights = [
     setSelectedUkInsight(ukInsights[randomIndex]);
   }, []);
 
-  const [interviewId] = useState(() => { if (typeof window !== "undefined") { const existingId = sessionStorage.getItem("precas-active-interview-id"); if (existingId) { return existingId; } } const newId = "PRECAS-" + new Date().getFullYear() + "-" + Math.random().toString(36).substring(2, 8).toUpperCase(); if (typeof window !== "undefined") { sessionStorage.setItem("precas-active-interview-id", newId); } return newId; });
+  const [interviewId, setInterviewId] = useState(() => { if (typeof window !== "undefined") { const existingId = sessionStorage.getItem("precas-active-interview-id"); if (existingId) { return existingId; } } const newId = "PRECAS-" + new Date().getFullYear() + "-" + Math.random().toString(36).substring(2, 8).toUpperCase(); if (typeof window !== "undefined") { sessionStorage.setItem("precas-active-interview-id", newId); } return newId; });
 
 
   /*
@@ -1042,7 +1186,44 @@ sessionStorage.setItem(
     }
   };
   /*
-   * DOWNLOAD ALL RECORDED VIDEOS
+   * DOWNLOAD A RECORDED VIDEO FROM THE LOCAL RECORDING AVAILABLE ON THIS PAGE
+   */
+  const downloadRecordedVideo = (questionIndex: number) => {
+    try {
+      setError("");
+
+      const videoUrl = recordedVideos[questionIndex];
+
+      if (!videoUrl) {
+        throw new Error(
+          "The recording for this question is not available on this page."
+        );
+      }
+
+      const link = document.createElement("a");
+      link.href = videoUrl;
+      link.download = `Pre-CAS-Interview-Q${String(questionIndex + 1).padStart(2, "0")}.webm`;
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (downloadError) {
+      console.error(
+        "Unable to download recorded video:",
+        downloadError
+      );
+
+      setError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Unable to download the interview recording."
+      );
+    }
+  };
+
+  /*
+   * DOWNLOAD ALL RECORDED VIDEOS FROM THE LOCAL RECORDINGS AVAILABLE ON THIS PAGE
    */
   const downloadAllRecordedVideos = async () => {
     const entries = Object.entries(recordedVideos);
@@ -1059,7 +1240,6 @@ sessionStorage.setItem(
 
       for (const [questionIndex, videoUrl] of entries) {
         const index = Number(questionIndex);
-
         const response = await fetch(videoUrl);
         const blob = await response.blob();
 
@@ -1078,19 +1258,26 @@ sessionStorage.setItem(
 
       link.href = downloadUrl;
       link.download = `Pre-CAS-Interview-${interviewId}.zip`;
+      link.style.display = "none";
 
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      URL.revokeObjectURL(downloadUrl);
+      setTimeout(() => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 1000);
     } catch (downloadError) {
       console.error(
-        "Unable to download recorded videos:",
+        "Unable to download all recorded videos:",
         downloadError
       );
 
-      setError("Unable to create the interview video download.");
+      setError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Unable to download all interview recordings."
+      );
     }
   };
 
@@ -1206,6 +1393,28 @@ sessionStorage.setItem(
    * RESTART
    */
   const restartInterview = async () => {
+    const previousInterviewId = interviewId;
+    const newInterviewId =
+      "PRECAS-" +
+      new Date().getFullYear() +
+      "-" +
+      Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(
+        `precas-interview-blob-paths-${previousInterviewId}`
+      );
+      sessionStorage.removeItem(
+        `precas-interview-download-token-${previousInterviewId}`
+      );
+      sessionStorage.setItem(
+        "precas-active-interview-id",
+        newInterviewId
+      );
+    }
+
+    setInterviewId(newInterviewId);
+
     try {
       await clearSavedInterviewAnswers();
     } catch (clearError) {
@@ -1490,14 +1699,74 @@ sessionStorage.setItem(
                         University
                       </label>
 
-                      <input
-                        value={university}
-                        onChange={(event) =>
-                          setUniversity(event.target.value)
-                        }
-                        placeholder="Your university"
-                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
-                      />
+                      <div className="relative">
+                        <input
+                          value={universitySearch}
+                          onChange={(event) => {
+                            setUniversitySearch(event.target.value);
+                            setUniversityOpen(true);
+                          }}
+                          onFocus={() => setUniversityOpen(true)}
+                          placeholder={university || "Search university"}
+                          className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 pr-10 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setUniversityOpen((open) => !open)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7b858d] hover:text-[#303b45]"
+                          aria-label="Open university list"
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+
+                        {universityOpen && (
+                          <div className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-[#dfe2e4] bg-white p-1 shadow-lg">
+                            {ukUniversities
+                              .filter((name) =>
+                                name
+                                  .toLowerCase()
+                                  .includes(universitySearch.toLowerCase())
+                              )
+                              .map((name) => (
+                                <button
+                                  key={name}
+                                  type="button"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    setUniversity(name);
+                                    setUniversitySearch("");
+                                    setUniversityOpen(false);
+                                  }}
+                                  className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#17212b] transition hover:bg-[#faf0f1] hover:text-[#b51f2b]"
+                                >
+                                  {name}
+                                </button>
+                              ))}
+
+                            {ukUniversities.filter((name) =>
+                              name
+                                .toLowerCase()
+                                .includes(universitySearch.toLowerCase())
+                            ).length === 0 && (
+                              <div className="px-3 py-3 text-sm text-[#7b858d]">
+                                No university found.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -1885,13 +2154,13 @@ sessionStorage.setItem(
                           className="w-full rounded-2xl border border-white/10 bg-black"
                         />
 
-                        <a
-                          href={videoUrl}
-                          download={`Pre-CAS-Interview-Q${String(index + 1).padStart(2, "0")}.webm`}
+                        <button
+                          type="button"
+                          onClick={() => downloadRecordedVideo(index)}
                           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
                         >
                           Download Video
-                        </a>
+                        </button>
                       </div>
                     );
                   }
@@ -2173,6 +2442,7 @@ return (
     </main>
   );
 }
+
 
 
 
