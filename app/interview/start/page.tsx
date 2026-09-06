@@ -1385,6 +1385,34 @@ sessionStorage.setItem(
         nextQuestion?.preparationTime ?? 15
       );
     } else {
+      /*
+       * Final question skipped: restore the recordings that were actually
+       * saved for this interview before showing the completion screen.
+       * A skipped question does not have a video, but it must not hide the
+       * videos that were already recorded.
+       */
+      try {
+        const answers = await getSavedInterviewAnswers();
+        const restoredVideos: Record<number, string> = {};
+
+        answers.forEach((answer) => {
+          if (answer.interviewId !== interviewId || !answer.videoBlob) {
+            return;
+          }
+
+          restoredVideos[answer.questionIndex] = URL.createObjectURL(
+            answer.videoBlob
+          );
+        });
+
+        setRecordedVideos(restoredVideos);
+      } catch (loadError) {
+        console.error(
+          "Unable to restore recorded interview videos:",
+          loadError
+        );
+      }
+
       setInterviewComplete(true);
     }
   };
