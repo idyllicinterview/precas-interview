@@ -1,4 +1,5 @@
-﻿import { cookies } from "next/headers";
+﻿import { get, list } from "@vercel/blob";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   getAdminSessionCookieName,
@@ -20,44 +21,81 @@ type Interview = {
 };
 
 async function getInterviews(): Promise<Interview[]> {
-  const cookieStore = await cookies();
+  const result = await list({
+    prefix: "interviews/",
+  });
 
-  const sessionToken = cookieStore.get(
-    getAdminSessionCookieName()
-  )?.value;
-
-  const session = verifyAdminSession(sessionToken);
-
-  if (!session) {
-    redirect("/admin/login");
-  }
-
-  const protocol =
-    process.env.NODE_ENV === "development" ? "http" : "https";
-
-  const host =
-    process.env.VERCEL_URL ??
-    "localhost:3000";
-
-  const response = await fetch(
-    `${protocol}://${host}/api/admin/interviews`,
-    {
-      cache: "no-store",
-      headers: {
-        Cookie: `${getAdminSessionCookieName()}=${sessionToken}`,
-      },
-    }
+  const manifestBlobs = result.blobs.filter(
+    (blob) =>
+      blob.pathname.startsWith("interviews/") &&
+      blob.pathname.endsWith("/manifest.json")
   );
 
-  if (!response.ok) {
-    return [];
+  const interviews: Interview[] = [];
+
+  for (const blob of manifestBlobs) {
+    try {
+      const stored = await get(blob.pathname, {
+        access: "private",
+      });
+
+      if (!stored) {
+        continue;
+      }
+
+      const text = await new Response(
+        stored.stream
+      ).text();
+
+      const manifest = JSON.parse(
+        text
+      ) as Partial<Interview>;
+
+      if (
+        typeof manifest.interviewId !== "string" ||
+        typeof manifest.fullName !== "string" ||
+        typeof manifest.email !== "string" ||
+        typeof manifest.phone !== "string" ||
+        typeof manifest.university !== "string" ||
+        typeof manifest.course !== "string" ||
+        typeof manifest.intake !== "string" ||
+        typeof manifest.startedAt !== "string" ||
+        !Array.isArray(manifest.blobPaths)
+      ) {
+        continue;
+      }
+
+      interviews.push({
+        interviewId: manifest.interviewId,
+        fullName: manifest.fullName,
+        email: manifest.email,
+        phone: manifest.phone,
+        university: manifest.university,
+        course: manifest.course,
+        intake: manifest.intake,
+        startedAt: manifest.startedAt,
+        totalVideos: manifest.blobPaths.length,
+        blobPaths: manifest.blobPaths,
+        createdAt:
+          typeof manifest.createdAt === "string"
+            ? manifest.createdAt
+            : blob.uploadedAt.toISOString(),
+      });
+    } catch (error) {
+      console.error(
+        `Unable to read interview manifest ${blob.pathname}:`,
+        error
+      );
+    }
   }
 
-  const data = await response.json();
+  interviews.sort(
+    (a, b) =>
+      new Date(b.startedAt).getTime() -
+      new Date(a.startedAt).getTime()
+  );
 
-  return Array.isArray(data?.interviews)
-    ? data.interviews
-    : [];
+  return interviews;
 }
 
 function formatInterviewDate(value: string): string {
