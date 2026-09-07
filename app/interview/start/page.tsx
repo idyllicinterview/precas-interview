@@ -1108,9 +1108,9 @@ sessionStorage.setItem(
       sessionStorage.getItem(storageKey) ?? "[]"
     ) as string[];
 
-    if (blobPaths.length !== 16) {
+    if (blobPaths.length > 16) {
       throw new Error(
-        `Expected 16 uploaded videos, but found ${blobPaths.length}.`
+        `Too many uploaded videos. Found ${blobPaths.length}.`
       );
     }
 
@@ -1125,6 +1125,11 @@ sessionStorage.setItem(
           interviewId,
           fullName: fullName.trim(),
           email: email.trim(),
+          phone: phone.replace(/\D/g, ""),
+          university: university.trim(),
+          course: course.trim(),
+          intake: intake.trim(),
+          startedAt: interviewStartedAt ?? new Date().toISOString(),
           blobPaths,
         }),
       }

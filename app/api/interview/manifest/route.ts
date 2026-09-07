@@ -8,6 +8,11 @@ export async function POST(request: Request): Promise<Response> {
       interviewId,
       fullName,
       email,
+      phone,
+      university,
+      course,
+      intake,
+      startedAt,
       blobPaths,
     } = body;
 
@@ -18,8 +23,14 @@ export async function POST(request: Request): Promise<Response> {
       !fullName ||
       typeof email !== "string" ||
       !email ||
+      typeof phone !== "string" ||
+      typeof university !== "string" ||
+      typeof course !== "string" ||
+      typeof intake !== "string" ||
+      typeof startedAt !== "string" ||
+      !startedAt ||
       !Array.isArray(blobPaths) ||
-      blobPaths.length !== 16 ||
+      blobPaths.length > 16 ||
       blobPaths.some(
         (path) => typeof path !== "string" || !path
       )
@@ -27,7 +38,7 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json(
         {
           error:
-            "Invalid interview manifest data. All 16 video paths are required.",
+            "Invalid interview manifest data.",
         },
         { status: 400 }
       );
@@ -35,11 +46,19 @@ export async function POST(request: Request): Promise<Response> {
 
     /*
      * Create the permanent interview manifest.
+     *
+     * Fewer than 16 videos are allowed because
+     * candidates may skip questions.
      */
     const manifest = {
       interviewId,
       fullName,
       email,
+      phone,
+      university,
+      course,
+      intake,
+      startedAt,
       totalVideos: blobPaths.length,
       blobPaths,
       createdAt: new Date().toISOString(),
@@ -58,7 +77,9 @@ export async function POST(request: Request): Promise<Response> {
     /*
      * Create a secure download token.
      */
-    const accessToken = crypto.randomUUID().replaceAll("-", "");
+    const accessToken = crypto
+      .randomUUID()
+      .replaceAll("-", "");
 
     /*
      * Give the download link a limited lifetime.
