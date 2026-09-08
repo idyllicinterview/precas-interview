@@ -1391,10 +1391,12 @@ sessionStorage.setItem(
       );
     } else {
       /*
-       * Final question skipped: restore the recordings that were actually
-       * saved for this interview before showing the completion screen.
-       * A skipped question does not have a video, but it must not hide the
-       * videos that were already recorded.
+       * Final question skipped.
+       *
+       * The candidate may finish the interview with fewer than 16 videos.
+       * Restore the recordings already saved locally, then create the same
+       * permanent manifest and secure download token used when the final
+       * question is answered.
        */
       try {
         const answers = await getSavedInterviewAnswers();
@@ -1418,7 +1420,80 @@ sessionStorage.setItem(
         );
       }
 
-      setInterviewComplete(true);
+      try {
+        const storageKey = `precas-interview-blob-paths-${interviewId}`;
+
+        const blobPaths = JSON.parse(
+          sessionStorage.getItem(storageKey) ?? "[]"
+        ) as string[];
+
+        if (blobPaths.length > 16) {
+          throw new Error(
+            `Too many uploaded videos. Found ${blobPaths.length}.`
+          );
+        }
+
+        const manifestResponse = await fetch(
+          "/api/interview/manifest",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              interviewId,
+              fullName: fullName.trim(),
+              email: email.trim(),
+              phone: phone.replace(/\D/g, ""),
+              university: university.trim(),
+              course: course.trim(),
+              intake: intake.trim(),
+              startedAt:
+                interviewStartedAt ?? new Date().toISOString(),
+              blobPaths,
+            }),
+          }
+        );
+
+        if (!manifestResponse.ok) {
+          const manifestError = await manifestResponse.json();
+
+          throw new Error(
+            manifestError.error ??
+              "Unable to create the interview manifest."
+          );
+        }
+
+        const manifestResult = await manifestResponse.json();
+
+        if (
+          typeof manifestResult.accessToken !== "string" ||
+          !manifestResult.accessToken
+        ) {
+          throw new Error(
+            "Interview manifest was created without a download token."
+          );
+        }
+
+        sessionStorage.setItem(
+          `precas-interview-download-token-${interviewId}`,
+          manifestResult.accessToken
+        );
+
+        setInterviewComplete(true);
+        setInterviewStarted(false);
+        setInterviewPhase("preparation");
+        setSeconds(0);
+      } catch (manifestError) {
+        console.error(
+          "Unable to finalize interview manifest:",
+          manifestError
+        );
+
+        setError(
+          "Your recordings were uploaded, but we could not finalize the interview. Please do not close this page."
+        );
+      }
     }
   };
 
