@@ -10,6 +10,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginVisible, setLoginVisible] = useState(false);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
@@ -20,19 +21,16 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "/api/admin/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            password,
-          }),
-        }
-      );
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
 
       const data = await response.json();
 
@@ -57,112 +55,227 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
-      <div className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center">
-        <div className="w-full rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-7 w-7"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 15.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20H10.9v-.2a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 6.63 15a1.7 1.7 0 0 0-1.56-1.03H4.9v-2.4h.17A1.7 1.7 0 0 0 6.63 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10.9 5.2V5h2.4v.2a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 17.57 10a1.7 1.7 0 0 0 1.56 1.03h.17v2.4h-.17A1.7 1.7 0 0 0 19.4 15Z"
-                />
-              </svg>
-            </div>
+    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage:
+            "url('/admin/super-admin-background.png')",
+        }}
+      />
 
-            <h1 className="text-2xl font-semibold">
-              Master Login
+      <div className="absolute inset-0 bg-white/[0.015]" />
+
+      <div className="relative min-h-screen">
+        {/* Official logo */}
+        <div className="absolute left-7 top-7 sm:left-10 sm:top-9 md:left-14 md:top-11 lg:left-16 lg:top-12">
+          <img
+            src="/admin/idyllic-education-logo.png"
+            alt="Idyllic Education Consultants"
+            className="h-auto w-[190px] object-contain object-left sm:w-[235px] md:w-[275px] lg:w-[300px]"
+          />
+        </div>
+
+        {/* Branding and login */}
+        <div className="absolute left-0 top-1/2 w-full -translate-y-1/2 px-7 sm:px-10 md:px-14 lg:px-16">
+          <div className="w-full max-w-[520px]">
+            <h1
+              className="
+                max-w-[500px]
+                font-serif
+                text-[2.35rem]
+                font-normal
+                leading-[1.02]
+                tracking-[-0.025em]
+                text-slate-900
+                drop-shadow-[0_2px_8px_rgba(255,255,255,0.38)]
+                sm:text-[2.8rem]
+                md:text-[3.2rem]
+                lg:text-[3.55rem]
+              "
+            >
+              Pre-CAS
+              <br />
+              Mock Interview
             </h1>
 
-            <p className="mt-2 text-sm text-slate-400">
-              Secure administrator access
-            </p>
-          </div>
-
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-            <div>
-              <label
-                htmlFor="username"
-                className="mb-2 block text-sm font-medium text-slate-200"
-              >
-                Username
-              </label>
-
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={(event) =>
-                  setUsername(event.target.value)
-                }
-                disabled={loading}
-                required
-                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-white/30 focus:ring-2 focus:ring-white/10 disabled:opacity-60"
-                placeholder="Enter username"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-slate-200"
-              >
-                Password
-              </label>
-
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
-                disabled={loading}
-                required
-                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-white/30 focus:ring-2 focus:ring-white/10 disabled:opacity-60"
-                placeholder="Enter password"
-              />
-            </div>
-
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"
-              >
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-white px-4 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            <p
+              className="
+                mt-5
+                text-[0.7rem]
+                font-semibold
+                uppercase
+                tracking-[0.3em]
+                text-slate-800
+                drop-shadow-[0_1px_5px_rgba(255,255,255,0.35)]
+                sm:text-xs
+              "
             >
-              {loading
-                ? "Signing in..."
-                : "Master Login"}
-            </button>
-          </form>
+              SECURE ADMIN PORTAL
+            </p>
+
+            {/* Invisible login interaction area */}
+            <div
+              className="relative mt-3 w-full max-w-[405px] py-5"
+              onMouseEnter={() => setLoginVisible(true)}
+              onMouseLeave={() => setLoginVisible(false)}
+              onFocus={() => setLoginVisible(true)}
+            >
+              <div
+                className={`
+                  transition-all
+                  duration-500
+                  ease-out
+                  ${
+                    loginVisible
+                      ? "translate-y-0 opacity-100"
+                      : "pointer-events-none translate-y-3 opacity-0"
+                  }
+                `}
+              >
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label
+                      htmlFor="username"
+                      className="sr-only"
+                    >
+                      Username
+                    </label>
+
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      value={username}
+                      onChange={(event) =>
+                        setUsername(event.target.value)
+                      }
+                      disabled={loading}
+                      required
+                      className="
+                        w-full
+                        border-0
+                        border-b
+                        border-slate-700/45
+                        bg-transparent
+                        px-1
+                        py-3
+                        text-[15px]
+                        text-slate-900
+                        outline-none
+                        transition
+                        placeholder:text-slate-600/75
+                        focus:border-slate-900
+                        focus:ring-0
+                        disabled:opacity-60
+                      "
+                      placeholder="Username"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="sr-only"
+                    >
+                      Password
+                    </label>
+
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event) =>
+                        setPassword(event.target.value)
+                      }
+                      disabled={loading}
+                      required
+                      className="
+                        w-full
+                        border-0
+                        border-b
+                        border-slate-700/45
+                        bg-transparent
+                        px-1
+                        py-3
+                        text-[15px]
+                        text-slate-900
+                        outline-none
+                        transition
+                        placeholder:text-slate-600/75
+                        focus:border-slate-900
+                        focus:ring-0
+                        disabled:opacity-60
+                      "
+                      placeholder="Password"
+                    />
+                  </div>
+
+                  {error && (
+                    <div
+                      role="alert"
+                      className="
+                        border-l
+                        border-red-700/60
+                        bg-white/25
+                        px-3
+                        py-2
+                        text-sm
+                        text-red-800
+                        backdrop-blur-sm
+                      "
+                    >
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="
+                        inline-flex
+                        items-center
+                        border-b
+                        border-slate-800/70
+                        px-1
+                        pb-1
+                        text-sm
+                        font-semibold
+                        uppercase
+                        tracking-[0.16em]
+                        text-slate-900
+                        transition
+                        hover:border-slate-950
+                        hover:text-slate-950
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                      "
+                    >
+                      <span>
+                        {loading ? "Signing In..." : "Sign In"}
+                      </span>
+
+                      {!loading && (
+                        <span
+                          aria-hidden="true"
+                          className="ml-2 transition-transform duration-300"
+                        >
+                          →
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
