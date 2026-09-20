@@ -1,0 +1,72 @@
+import { head, put } from "@vercel/blob";
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    const body = await request.json();
+
+    const { interviewId } = body;
+
+    if (typeof interviewId !== "string" || !interviewId) {
+      return Response.json(
+        {
+          error: "A valid interview ID is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const manifestPath = `interviews/${interviewId}/manifest.json`;
+
+    /*
+     * Confirm that the permanent interview manifest exists.
+     */
+    const manifestBlob = await head(manifestPath);
+
+    /*
+     * Create a short-lived access token.
+     *
+     * This is only a temporary foundation for the
+     * secure download flow. Email delivery will be
+     * connected separately.
+     */
+    const accessToken = crypto.randomUUID();
+
+    const accessRecord = {
+      interviewId,
+      manifestPath: manifestBlob.pathname,
+      accessToken,
+      createdAt: new Date().toISOString(),
+    };
+
+    await put(
+      `interviews/${interviewId}/download-access.json`,
+      JSON.stringify(accessRecord, null, 2),
+      {
+        access: "private",
+        addRandomSuffix: false,
+        contentType: "application/json",
+      }
+    );
+
+    return Response.json({
+      success: true,
+      interviewId,
+      accessToken,
+    });
+  } catch (error) {
+    console.error(
+      "Unable to create interview download access:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create interview download access.",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -140,7 +140,7 @@ const ukUniversities = [
   "Canterbury Christ Church University",
   "Cardiff Metropolitan University",
   "Cardiff University",
-  "City St Georgeâ€™s, University of London",
+  "City St George’s, University of London",
   "Coventry University",
   "Cranfield University",
   "De Montfort University",
@@ -156,7 +156,7 @@ const ukUniversities = [
   "Imperial College London",
   "Keele University",
   "Kingston University",
-  "Kingâ€™s College London",
+  "King’s College London",
   "Lancaster University",
   "Leeds Beckett University",
   "Leeds Trinity University",
@@ -177,9 +177,9 @@ const ukUniversities = [
   "Plymouth Marjon University",
   "Queen Margaret University",
   "Queen Mary University of London",
-  "Queenâ€™s University Belfast",
+  "Queen’s University Belfast",
   "Ravensbourne University London",
-  "Regentâ€™s University London",
+  "Regent’s University London",
   "Robert Gordon University",
   "Royal Central School of Speech & Drama",
   "Royal College of Art",
@@ -189,7 +189,7 @@ const ukUniversities = [
   "Sheffield Hallam University",
   "SOAS University of London",
   "Solent University",
-  "St Maryâ€™s University, Twickenham",
+  "St Mary’s University, Twickenham",
   "Swansea University",
   "Teesside University",
   "The Open University",
@@ -1777,15 +1777,6 @@ sessionStorage.setItem(
                 <div className="h-5 w-px bg-white/25" />
 
                 <Link
-                  href="/interview/counsellor"
-                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
-                >
-                  Counsellor
-                </Link>
-
-                <div className="h-5 w-px bg-white/25" />
-
-                <Link
                   href="/interview/how-to-use"
                   className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
                 >
@@ -2682,8 +2673,6 @@ return (
     </main>
   );
 }
-
-
 
 
 

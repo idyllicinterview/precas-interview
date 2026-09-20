@@ -1,0 +1,996 @@
+warning: in the working copy of 'app/admin/page.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/admin/login/page.tsx b/app/admin/login/page.tsx[m
+[1mindex a7eb5b5..2f4797a 100644[m
+[1m--- a/app/admin/login/page.tsx[m
+[1m+++ b/app/admin/login/page.tsx[m
+[36m@@ -10,6 +10,7 @@[m [mexport default function AdminLoginPage() {[m
+   const [password, setPassword] = useState("");[m
+   const [error, setError] = useState("");[m
+   const [loading, setLoading] = useState(false);[m
+[32m+[m[32m  const [loginVisible, setLoginVisible] = useState(false);[m
+ [m
+   async function handleSubmit([m
+     event: FormEvent<HTMLFormElement>[m
+[36m@@ -20,19 +21,16 @@[m [mexport default function AdminLoginPage() {[m
+     setLoading(true);[m
+ [m
+     try {[m
+[31m-      const response = await fetch([m
+[31m-        "/api/admin/login",[m
+[31m-        {[m
+[31m-          method: "POST",[m
+[31m-          headers: {[m
+[31m-            "Content-Type": "application/json",[m
+[31m-          },[m
+[31m-          body: JSON.stringify({[m
+[31m-            username,[m
+[31m-            password,[m
+[31m-          }),[m
+[31m-        }[m
+[31m-      );[m
+[32m+[m[32m      const response = await fetch("/api/admin/login", {[m
+[32m+[m[32m        method: "POST",[m
+[32m+[m[32m        headers: {[m
+[32m+[m[32m          "Content-Type": "application/json",[m
+[32m+[m[32m        },[m
+[32m+[m[32m        body: JSON.stringify({[m
+[32m+[m[32m          username,[m
+[32m+[m[32m          password,[m
+[32m+[m[32m        }),[m
+[32m+[m[32m      });[m
+ [m
+       const data = await response.json();[m
+ [m
+[36m@@ -57,112 +55,227 @@[m [mexport default function AdminLoginPage() {[m
+   }[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">[m
+[31m-      <div className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center">[m
+[31m-        <div className="w-full rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">[m
+[31m-          <div className="mb-8 text-center">[m
+[31m-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/10">[m
+[31m-              <svg[m
+[31m-                viewBox="0 0 24 24"[m
+[31m-                fill="none"[m
+[31m-                stroke="currentColor"[m
+[31m-                strokeWidth="1.8"[m
+[31m-                className="h-7 w-7"[m
+[31m-                aria-hidden="true"[m
+[31m-              >[m
+[31m-                <path[m
+[31m-                  strokeLinecap="round"[m
+[31m-                  strokeLinejoin="round"[m
+[31m-                  d="M12 15.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"[m
+[31m-                />[m
+[31m-                <path[m
+[31m-                  strokeLinecap="round"[m
+[31m-                  strokeLinejoin="round"[m
+[31m-                  d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20H10.9v-.2a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 6.63 15a1.7 1.7 0 0 0-1.56-1.03H4.9v-2.4h.17A1.7 1.7 0 0 0 6.63 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10.9 5.2V5h2.4v.2a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 17.57 10a1.7 1.7 0 0 0 1.56 1.03h.17v2.4h-.17A1.7 1.7 0 0 0 19.4 15Z"[m
+[31m-                />[m
+[31m-              </svg>[m
+[31m-            </div>[m
+[32m+[m[32m    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">[m
+[32m+[m[32m      <div[m
+[32m+[m[32m        className="absolute inset-0 bg-cover bg-center bg-no-repeat"[m
+[32m+[m[32m        style={{[m
+[32m+[m[32m          backgroundImage:[m
+[32m+[m[32m            "url('/admin/super-admin-background.png')",[m
+[32m+[m[32m        }}[m
+[32m+[m[32m      />[m
+[32m+[m
+[32m+[m[32m      <div className="absolute inset-0 bg-white/[0.015]" />[m
+[32m+[m
+[32m+[m[32m      <div className="relative min-h-screen">[m
+[32m+[m[32m        {/* Official logo */}[m
+[32m+[m[32m        <div className="absolute left-7 top-7 sm:left-10 sm:top-9 md:left-14 md:top-11 lg:left-16 lg:top-12">[m
+[32m+[m[32m          <img[m
+[32m+[m[32m            src="/admin/idyllic-education-logo.png"[m
+[32m+[m[32m            alt="Idyllic Education Consultants"[m
+[32m+[m[32m            className="h-auto w-[190px] object-contain object-left sm:w-[235px] md:w-[275px] lg:w-[300px]"[m
+[32m+[m[32m          />[m
+[32m+[m[32m        </div>[m
+ [m
+[31m-            <h1 className="text-2xl font-semibold">[m
+[31m-              Master Login[m
+[32m+[m[32m        {/* Branding and login */}[m
+[32m+[m[32m        <div className="absolute left-0 top-1/2 w-full -translate-y-1/2 px-7 sm:px-10 md:px-14 lg:px-16">[m
+[32m+[m[32m          <div className="w-full max-w-[520px]">[m
+[32m+[m[32m            <h1[m
+[32m+[m[32m              className="[m
+[32m+[m[32m                max-w-[500px][m
+[32m+[m[32m                font-serif[m
+[32m+[m[32m                text-[2.35rem][m
+[32m+[m[32m                font-normal[m
+[32m+[m[32m                leading-[1.02][m
+[32m+[m[32m                tracking-[-0.025em][m
+[32m+[m[32m                text-slate-900[m
+[32m+[m[32m                drop-shadow-[0_2px_8px_rgba(255,255,255,0.38)][m
+[32m+[m[32m                sm:text-[2.8rem][m
+[32m+[m[32m                md:text-[3.2rem][m
+[32m+[m[32m                lg:text-[3.55rem][m
+[32m+[m[32m              "[m
+[32m+[m[32m            >[m
+[32m+[m[32m              Pre-CAS[m
+[32m+[m[32m              <br />[m
+[32m+[m[32m              Mock Interview[m
+             </h1>[m
+ [m
+[31m-            <p className="mt-2 text-sm text-slate-400">[m
+[31m-              Secure administrator access[m
+[32m+[m[32m            <p[m
+[32m+[m[32m              className="[m
+[32m+[m[32m                mt-5[m
+[32m+[m[32m                text-[0.7rem][m
+[32m+[m[32m                font-semibold[m
+[32m+[m[32m                uppercase[m
+[32m+[m[32m                tracking-[0.3em][m
+[32m+[m[32m                text-slate-800[m
+[32m+[m[32m                drop-shadow-[0_1px_5px_rgba(255,255,255,0.35)][m
+[32m+[m[32m                sm:text-xs[m
+[32m+[m[32m              "[m
+[32m+[m[32m            >[m
+[32m+[m[32m              SECURE ADMIN PORTAL[m
+             </p>[m
+[31m-          </div>[m
+ [m
+[31m-          <form[m
+[31m-            onSubmit={handleSubmit}[m
+[31m-            className="space-y-5"[m
+[31m-          >[m
+[31m-            <div>[m
+[31m-              <label[m
+[31m-                htmlFor="username"[m
+[31m-                className="mb-2 block text-sm font-medium text-slate-200"[m
+[32m+[m[32m            {/* Invisible login interaction area */}[m
+[32m+[m[32m            <div[m
+[32m+[m[32m              className="relative mt-3 w-full max-w-[405px] py-5"[m
+[32m+[m[32m              onMouseEnter={() => setLoginVisible(true)}[m
+[32m+[m[32m              onMouseLeave={() => setLoginVisible(false)}[m
+[32m+[m[32m              onFocus={() => setLoginVisible(true)}[m
+[32m+[m[32m            >[m
+[32m+[m[32m              <div[m
+[32m+[m[32m                className={`[m
+[32m+[m[32m                  transition-all[m
+[32m+[m[32m                  duration-500[m
+[32m+[m[32m                  ease-out[m
+[32m+[m[32m                  ${[m
+[32m+[m[32m                    loginVisible[m
+[32m+[m[32m                      ? "translate-y-0 opacity-100"[m
+[32m+[m[32m                      : "pointer-events-none translate-y-3 opacity-0"[m
+[32m+[m[32m                  }[m
+[32m+[m[32m                `}[m
+               >[m
+[31m-                Username[m
+[31m-              </label>[m
+[31m-[m
+[31m-              <input[m
+[31m-                id="username"[m
+[31m-                name="username"[m
+[31m-                type="text"[m
+[31m-                autoComplete="username"[m
+[31m-                value={username}[m
+[31m-                onChange={(event) =>[m
+[31m-                  setUsername(event.target.value)[m
+[31m-                }[m
+[31m-                disabled={loading}[m
+[31m-                required[m
+[31m-                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-white/30 focus:ring-2 focus:ring-white/10 disabled:opacity-60"[m
+[31m-                placeholder="Enter username"[m
+[31m-              />[m
+[31m-            </div>[m
+[32m+[m[32m                <form[m
+[32m+[m[32m                  onSubmit={handleSubmit}[m
+[32m+[m[32m                  className="space-y-4"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <div>[m
+[32m+[m[32m                    <label[m
+[32m+[m[32m                      htmlFor="username"[m
+[32m+[m[32m                      className="sr-only"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      Username[m
+[32m+[m[32m                    </label>[m
+ [m
+[31m-            <div>[m
+[31m-              <label[m
+[31m-                htmlFor="password"[m
+[31m-                className="mb-2 block text-sm font-medium text-slate-200"[m
+[31m-              >[m
+[31m-                Password[m
+[31m-              </label>[m
+[31m-[m
+[31m-              <input[m
+[31m-                id="password"[m
+[31m-                name="password"[m
+[31m-                type="password"[m
+[31m-                autoComplete="current-password"[m
+[31m-                value={password}[m
+[31m-                onChange={(event) =>[m
+[31m-                  setPassword(event.target.value)[m
+[31m-                }[m
+[31m-                disabled={loading}[m
+[31m-                required[m
+[31m-                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-white/30 focus:ring-2 focus:ring-white/10 disabled:opacity-60"[m
+[31m-                placeholder="Enter password"[m
+[31m-              />[m
+[31m-            </div>[m
+[32m+[m[32m                    <input[m
+[32m+[m[32m                      id="username"[m
+[32m+[m[32m                      name="username"[m
+[32m+[m[32m                      type="text"[m
+[32m+[m[32m                      autoComplete="username"[m
+[32m+[m[32m                      value={username}[m
+[32m+[m[32m                      onChange={(event) =>[m
+[32m+[m[32m                        setUsername(event.target.value)[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                      disabled={loading}[m
+[32m+[m[32m                      required[m
+[32m+[m[32m                      className="[m
+[32m+[m[32m                        w-full[m
+[32m+[m[32m                        border-0[m
+[32m+[m[32m                        border-b[m
+[32m+[m[32m                        border-slate-700/45[m
+[32m+[m[32m                        bg-transparent[m
+[32m+[m[32m                        px-1[m
+[32m+[m[32m                        py-3[m
+[32m+[m[32m                        text-[15px][m
+[32m+[m[32m                        text-slate-900[m
+[32m+[m[32m                        outline-none[m
+[32m+[m[32m                        transition[m
+[32m+[m[32m                        placeholder:text-slate-600/75[m
+[32m+[m[32m                        focus:border-slate-900[m
+[32m+[m[32m                        focus:ring-0[m
+[32m+[m[32m                        disabled:opacity-60[m
+[32m+[m[32m                      "[m
+[32m+[m[32m                      placeholder="Username"[m
+[32m+[m[32m                    />[m
+[32m+[m[32m                  </div>[m
+ [m
+[31m-            {error && ([m
+[31m-              <div[m
+[31m-                role="alert"[m
+[31m-                className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"[m
+[31m-              >[m
+[31m-                {error}[m
+[31m-              </div>[m
+[31m-            )}[m
+[32m+[m[32m                  <div>[m
+[32m+[m[32m                    <label[m
+[32m+[m[32m                      htmlFor="password"[m
+[32m+[m[32m                      className="sr-only"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      Password[m
+[32m+[m[32m                    </label>[m
+ [m
+[31m-            <button[m
+[31m-              type="submit"[m
+[31m-              disabled={loading}[m
+[31m-              className="w-full rounded-xl bg-white px-4 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"[m
+[31m-            >[m
+[31m-              {loading[m
+[31m-                ? "Signing in..."[m
+[31m-                : "Master Login"}[m
+[31m-            </button>[m
+[31m-          </form>[m
+[32m+[m[32m                    <input[m
+[32m+[m[32m                      id="password"[m
+[32m+[m[32m                      name="password"[m
+[32m+[m[32m                      type="password"[m
+[32m+[m[32m                      autoComplete="current-password"[m
+[32m+[m[32m                      value={password}[m
+[32m+[m[32m                      onChange={(event) =>[m
+[32m+[m[32m                        setPassword(event.target.value)[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                      disabled={loading}[m
+[32m+[m[32m                      required[m
+[32m+[m[32m                      className="[m
+[32m+[m[32m                        w-full[m
+[32m+[m[32m                        border-0[m
+[32m+[m[32m                        border-b[m
+[32m+[m[32m                        border-slate-700/45[m
+[32m+[m[32m                        bg-transparent[m
+[32m+[m[32m                        px-1[m
+[32m+[m[32m                        py-3[m
+[32m+[m[32m                        text-[15px][m
+[32m+[m[32m                        text-slate-900[m
+[32m+[m[32m                        outline-none[m
+[32m+[m[32m                        transition[m
+[32m+[m[32m                        placeholder:text-slate-600/75[m
+[32m+[m[32m                        focus:border-slate-900[m
+[32m+[m[32m                        focus:ring-0[m
+[32m+[m[32m                        disabled:opacity-60[m
+[32m+[m[32m                      "[m
+[32m+[m[32m                      placeholder="Password"[m
+[32m+[m[32m                    />[m
+[32m+[m[32m                  </div>[m
+[32m+[m
+[32m+[m[32m                  {error && ([m
+[32m+[m[32m                    <div[m
+[32m+[m[32m                      role="alert"[m
+[32m+[m[32m                      className="[m
+[32m+[m[32m                        border-l[m
+[32m+[m[32m                        border-red-700/60[m
+[32m+[m[32m                        bg-white/25[m
+[32m+[m[32m                        px-3[m
+[32m+[m[32m                        py-2[m
+[32m+[m[32m                        text-sm[m
+[32m+[m[32m                        text-red-800[m
+[32m+[m[32m                        backdrop-blur-sm[m
+[32m+[m[32m                      "[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      {error}[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                  )}[m
+[32m+[m
+[32m+[m[32m                  <div className="pt-2">[m
+[32m+[m[32m                    <button[m
+[32m+[m[32m                      type="submit"[m
+[32m+[m[32m                      disabled={loading}[m
+[32m+[m[32m                      className="[m
+[32m+[m[32m                        inline-flex[m
+[32m+[m[32m                        items-center[m
+[32m+[m[32m                        border-b[m
+[32m+[m[32m                        border-slate-800/70[m
+[32m+[m[32m                        px-1[m
+[32m+[m[32m                        pb-1[m
+[32m+[m[32m                        text-sm[m
+[32m+[m[32m                        font-semibold[m
+[32m+[m[32m                        uppercase[m
+[32m+[m[32m                        tracking-[0.16em][m
+[32m+[m[32m                        text-slate-900[m
+[32m+[m[32m                        transition[m
+[32m+[m[32m                        hover:border-slate-950[m
+[32m+[m[32m                        hover:text-slate-950[m
+[32m+[m[32m                        disabled:cursor-not-allowed[m
+[32m+[m[32m                        disabled:opacity-60[m
+[32m+[m[32m                      "[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <span>[m
+[32m+[m[32m                        {loading ? "Signing In..." : "Sign In"}[m
+[32m+[m[32m                      </span>[m
+[32m+[m
+[32m+[m[32m                      {!loading && ([m
+[32m+[m[32m                        <span[m
+[32m+[m[32m                          aria-hidden="true"[m
+[32m+[m[32m                          className="ml-2 transition-transform duration-300"[m
+[32m+[m[32m                        >[m
+[32m+[m[32m                          →[m
+[32m+[m[32m                        </span>[m
+[32m+[m[32m                      )}[m
+[32m+[m[32m                    </button>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                </form>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+         </div>[m
+       </div>[m
+     </main>[m
+[1mdiff --git a/app/admin/page.tsx b/app/admin/page.tsx[m
+[1mindex 8ff765a..ddf7efc 100644[m
+[1m--- a/app/admin/page.tsx[m
+[1m+++ b/app/admin/page.tsx[m
+[36m@@ -5,6 +5,7 @@[m [mimport {[m
+   getAdminSessionCookieName,[m
+   verifyAdminSession,[m
+ } from "@/app/lib/adminAuth";[m
+[32m+[m[32mimport LogoutButton from "./components/LogoutButton";[m
+ [m
+ type Interview = {[m
+   interviewId: string;[m
+[36m@@ -43,13 +44,9 @@[m [masync function getInterviews(): Promise<Interview[]> {[m
+         continue;[m
+       }[m
+ [m
+[31m-      const text = await new Response([m
+[31m-        stored.stream[m
+[31m-      ).text();[m
+[32m+[m[32m      const text = await new Response(stored.stream).text();[m
+ [m
+[31m-      const manifest = JSON.parse([m
+[31m-        text[m
+[31m-      ) as Partial<Interview>;[m
+[32m+[m[32m      const manifest = JSON.parse(text) as Partial<Interview>;[m
+ [m
+       if ([m
+         typeof manifest.interviewId !== "string" ||[m
+[36m@@ -126,159 +123,481 @@[m [mexport default async function AdminPage() {[m
+ [m
+   const interviews = await getInterviews();[m
+ [m
+[32m+[m[32m  const totalVideos = interviews.reduce([m
+[32m+[m[32m    (total, interview) => total + interview.totalVideos,[m
+[32m+[m[32m    0[m
+[32m+[m[32m  );[m
+[32m+[m
+   return ([m
+[31m-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">[m
+[31m-      <div className="mx-auto max-w-7xl">[m
+[31m-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">[m
+[31m-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">[m
+[31m-            <div>[m
+[31m-              <p className="text-sm font-medium text-slate-400">[m
+[32m+[m[32m    <main className="min-h-screen bg-[#071525] text-white">[m
+[32m+[m[32m      {/* Background atmosphere */}[m
+[32m+[m[32m      <div className="pointer-events-none fixed inset-0 overflow-hidden">[m
+[32m+[m[32m        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-sky-400/10 blur-3xl" />[m
+[32m+[m[32m        <div className="absolute -right-32 top-24 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />[m
+[32m+[m[32m        <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-amber-300/5 blur-3xl" />[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m[32m      <div className="relative mx-auto min-h-screen max-w-[1500px] px-4 py-5 sm:px-6 lg:px-8">[m
+[32m+[m[32m        {/* Top navigation */}[m
+[32m+[m[32m        <header className="group mb-6 rounded-2xl border border-white/10 bg-white/[0.055] shadow-2xl backdrop-blur-xl transition-colors duration-300 hover:border-white/[0.14]">[m
+[32m+[m[32m          <div className="flex flex-col gap-5 px-5 py-4 sm:px-7 lg:flex-row lg:items-center lg:justify-between">[m
+[32m+[m[32m            <div className="flex items-center gap-4">[m
+[32m+[m[32m              <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.035] shadow-lg">[m
+[32m+[m[32m                <img[m
+[32m+[m[32m                  src="/admin/vertical-logo.jpg"[m
+[32m+[m[32m                  alt="Idyllic Education"[m
+[32m+[m[32m                  className="h-full w-full object-contain p-1.5"[m
+[32m+[m[32m                />[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <div className="min-w-0">[m
+[32m+[m[32m                <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-sky-200/65 sm:text-[11px]">[m
+[32m+[m[32m                  Idyllic Education[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <h1 className="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl">[m
+[32m+[m[32m                  Pre-CAS Mock Interview[m
+[32m+[m[32m                </h1>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-0.5 text-xs text-slate-400">[m
+[32m+[m[32m                  Secure administration portal[m
+[32m+[m[32m                </p>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            <div className="flex flex-wrap items-center gap-3">[m
+[32m+[m[32m              <div className="hidden text-right md:block">[m
+[32m+[m[32m                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                  Administrator[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-1 text-sm font-medium text-slate-200">[m
+[32m+[m[32m                  {session.username}[m
+[32m+[m[32m                </p>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <div className="hidden h-9 w-px bg-white/10 md:block" />[m
+[32m+[m
+[32m+[m[32m              <div className="flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.08] px-3 py-2 text-xs font-medium text-emerald-200 shadow-sm">[m
+[32m+[m[32m                <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" />[m
+[32m+[m[32m                Secure session[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <LogoutButton />[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </header>[m
+[32m+[m
+[32m+[m[32m        {/* Dashboard introduction */}[m
+[32m+[m[32m        <section className="relative mb-7 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.09] via-white/[0.045] to-white/[0.025] shadow-2xl backdrop-blur-xl">[m
+[32m+[m[32m          <div[m
+[32m+[m[32m            className="pointer-events-none absolute inset-y-0 right-0 w-[58%] opacity-[0.16]"[m
+[32m+[m[32m            style={{[m
+[32m+[m[32m              backgroundImage: "url('/admin/super-admin-background.png')",[m
+[32m+[m[32m              backgroundPosition: "right center",[m
+[32m+[m[32m              backgroundRepeat: "no-repeat",[m
+[32m+[m[32m              backgroundSize: "cover",[m
+[32m+[m[32m            }}[m
+[32m+[m[32m          />[m
+[32m+[m
+[32m+[m[32m          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#101e2e] via-[#101e2e]/95 via-[55%] to-[#101e2e]/35" />[m
+[32m+[m
+[32m+[m[32m          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#071525]/10 via-transparent to-[#071525]/25" />[m
+[32m+[m
+[32m+[m[32m          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-sky-300/10 blur-3xl" />[m
+[32m+[m[32m          <div className="pointer-events-none absolute bottom-0 right-20 h-48 w-48 rounded-full bg-amber-200/5 blur-3xl" />[m
+[32m+[m
+[32m+[m[32m          <div className="relative px-6 py-8 sm:px-8 sm:py-10 lg:px-10">[m
+[32m+[m[32m            <div className="max-w-3xl">[m
+[32m+[m[32m              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-200/70">[m
+                 Secure Administration[m
+               </p>[m
+ [m
+[31m-              <h1 className="mt-1 text-3xl font-semibold">[m
+[32m+[m[32m              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">[m
+                 Master Dashboard[m
+[31m-              </h1>[m
+[32m+[m[32m              </h2>[m
+ [m
+[31m-              <p className="mt-2 text-sm text-slate-400">[m
+[31m-                Signed in as {session.username}[m
+[32m+[m[32m              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">[m
+[32m+[m[32m                Manage completed Pre-CAS mock interviews, review applicant[m
+[32m+[m[32m                records, and access securely stored interview recordings.[m
+               </p>[m
+             </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-            <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-300">[m
+[31m-              Admin session active[m
+[32m+[m[32m        {/* Summary cards */}[m
+[32m+[m[32m        <section className="mb-8 grid gap-4 md:grid-cols-3">[m
+[32m+[m[32m          {/* Total Interviews */}[m
+[32m+[m[32m          <div className="group relative overflow-hidden rounded-2xl border border-sky-300/10 bg-gradient-to-br from-sky-300/[0.09] via-white/[0.055] to-white/[0.035] p-5 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-300/20 hover:bg-sky-300/[0.11] hover:shadow-2xl">[m
+[32m+[m[32m            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-sky-300/10 blur-2xl" />[m
+[32m+[m
+[32m+[m[32m            <div className="relative flex items-start justify-between gap-5">[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-100/55">[m
+[32m+[m[32m                  Total Interviews[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-3 text-4xl font-semibold tracking-tight text-white">[m
+[32m+[m[32m                  {interviews.length}[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-1.5 text-sm text-slate-400">[m
+[32m+[m[32m                  Completed records[m
+[32m+[m[32m                </p>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-sky-200/15 bg-sky-200/10 text-sky-100 shadow-lg transition-transform duration-300 group-hover:scale-105">[m
+[32m+[m[32m                <svg[m
+[32m+[m[32m                  viewBox="0 0 24 24"[m
+[32m+[m[32m                  fill="none"[m
+[32m+[m[32m                  className="h-5 w-5"[m
+[32m+[m[32m                  stroke="currentColor"[m
+[32m+[m[32m                  strokeWidth="1.7"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <path[m
+[32m+[m[32m                    strokeLinecap="round"[m
+[32m+[m[32m                    strokeLinejoin="round"[m
+[32m+[m[32m                    d="M15 19a4 4 0 0 0-8 0m4-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 8a4 4 0 0 0-3-3.87M16 5.13a3 3 0 0 1 0 5.74"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                </svg>[m
+[32m+[m[32m              </div>[m
+             </div>[m
+[32m+[m
+[32m+[m[32m            <div className="relative mt-5 h-px w-full bg-gradient-to-r from-sky-200/20 via-sky-200/5 to-transparent" />[m
+           </div>[m
+ [m
+[31m-          <div className="mt-8">[m
+[31m-            <div className="mb-5 flex items-center justify-between">[m
+[32m+[m[32m          {/* Videos Available */}[m
+[32m+[m[32m          <div className="group relative overflow-hidden rounded-2xl border border-amber-200/10 bg-gradient-to-br from-amber-200/[0.08] via-white/[0.055] to-white/[0.035] p-5 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-200/20 hover:bg-amber-200/[0.1] hover:shadow-2xl">[m
+[32m+[m[32m            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-amber-200/10 blur-2xl" />[m
+[32m+[m
+[32m+[m[32m            <div className="relative flex items-start justify-between gap-5">[m
+               <div>[m
+[31m-                <h2 className="text-xl font-semibold">[m
+[31m-                  Applicants[m
+[31m-                </h2>[m
+[32m+[m[32m                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-100/55">[m
+[32m+[m[32m                  Videos Available[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-3 text-4xl font-semibold tracking-tight text-white">[m
+[32m+[m[32m                  {totalVideos}[m
+[32m+[m[32m                </p>[m
+ [m
+[31m-                <p className="mt-1 text-sm text-slate-400">[m
+[31m-                  Interview records received by the system.[m
+[32m+[m[32m                <p className="mt-1.5 text-sm text-slate-400">[m
+[32m+[m[32m                  Securely stored recordings[m
+                 </p>[m
+               </div>[m
+ [m
+[31m-              <div className="rounded-lg border border-white/10 bg-black/20 px-4 py-2 text-sm text-slate-300">[m
+[31m-                {interviews.length}{" "}[m
+[31m-                {interviews.length === 1[m
+[31m-                  ? "interview"[m
+[31m-                  : "interviews"}[m
+[32m+[m[32m              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-amber-200/15 bg-amber-200/10 text-amber-100 shadow-lg transition-transform duration-300 group-hover:scale-105">[m
+[32m+[m[32m                <svg[m
+[32m+[m[32m                  viewBox="0 0 24 24"[m
+[32m+[m[32m                  fill="none"[m
+[32m+[m[32m                  className="h-5 w-5"[m
+[32m+[m[32m                  stroke="currentColor"[m
+[32m+[m[32m                  strokeWidth="1.7"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <path[m
+[32m+[m[32m                    strokeLinecap="round"[m
+[32m+[m[32m                    strokeLinejoin="round"[m
+[32m+[m[32m                    d="m15 10-4-2.5v9L15 14m4 3.5A2.5 2.5 0 0 0 21.5 15V9A2.5 2.5 0 0 0 19 6.5H5A2.5 2.5 0 0 0 2.5 9v6A2.5 2.5 0 0 0 5 17.5h14Z"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                </svg>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            <div className="relative mt-5 h-px w-full bg-gradient-to-r from-amber-200/20 via-amber-200/5 to-transparent" />[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m          {/* System Status */}[m
+[32m+[m[32m          <div className="group relative overflow-hidden rounded-2xl border border-emerald-300/10 bg-gradient-to-br from-emerald-300/[0.08] via-white/[0.055] to-white/[0.035] p-5 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300/20 hover:bg-emerald-300/[0.1] hover:shadow-2xl">[m
+[32m+[m[32m            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-300/10 blur-2xl" />[m
+[32m+[m
+[32m+[m[32m            <div className="relative flex items-start justify-between gap-5">[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-100/55">[m
+[32m+[m[32m                  System Status[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-200">[m
+[32m+[m[32m                  Operational[m
+[32m+[m[32m                </p>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-1.5 text-sm text-slate-400">[m
+[32m+[m[32m                  Administration portal active[m
+[32m+[m[32m                </p>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-300/15 bg-emerald-300/10 text-emerald-200 shadow-lg transition-transform duration-300 group-hover:scale-105">[m
+[32m+[m[32m                <span className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.7)]" />[m
+               </div>[m
+             </div>[m
+ [m
+[31m-            {interviews.length === 0 ? ([m
+[31m-              <div className="rounded-xl border border-dashed border-white/10 bg-black/20 p-10 text-center">[m
+[31m-                <p className="text-base font-medium text-slate-300">[m
+[31m-                  No interview records found.[m
+[32m+[m[32m            <div className="relative mt-5 h-px w-full bg-gradient-to-r from-emerald-300/20 via-emerald-300/5 to-transparent" />[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </section>[m
+[32m+[m
+[32m+[m[32m        {/* Applicants section */}[m
+[32m+[m[32m        <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045] shadow-2xl backdrop-blur-xl">[m
+[32m+[m[32m          <div className="border-b border-white/10 px-6 py-6 sm:px-8">[m
+[32m+[m[32m            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-200/60">[m
+[32m+[m[32m                  Interview Records[m
+                 </p>[m
+ [m
+[31m-                <p className="mt-2 text-sm text-slate-500">[m
+[31m-                  Completed interviews will appear here.[m
+[32m+[m[32m                <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">[m
+[32m+[m[32m                  Applicants[m
+[32m+[m[32m                </h3>[m
+[32m+[m
+[32m+[m[32m                <p className="mt-1.5 text-sm text-slate-400">[m
+[32m+[m[32m                  Completed interview records received by the system.[m
+                 </p>[m
+               </div>[m
+[31m-            ) : ([m
+[31m-              <div className="overflow-hidden rounded-xl border border-white/10">[m
+[31m-                <div className="overflow-x-auto">[m
+[31m-                  <table className="min-w-full divide-y divide-white/10">[m
+[31m-                    <thead className="bg-black/20">[m
+[31m-                      <tr>[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Applicant[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Mobile[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          University[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Course[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Intake[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Interview Date & Time[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Videos[m
+[31m-                        </th>[m
+[31m-[m
+[31m-                        <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">[m
+[31m-                          Action[m
+[31m-                        </th>[m
+[31m-                      </tr>[m
+[31m-                    </thead>[m
+[31m-[m
+[31m-                    <tbody className="divide-y divide-white/10">[m
+[31m-                      {interviews.map((interview) => ([m
+[31m-                        <tr[m
+[31m-                          key={interview.interviewId}[m
+[31m-                          className="transition hover:bg-white/[0.03]"[m
+[31m-                        >[m
+[31m-                          <td className="whitespace-nowrap px-5 py-5">[m
+[31m-                            <div className="font-medium text-white">[m
+[31m-                              {interview.fullName}[m
+[31m-                            </div>[m
+ [m
+[31m-                            <div className="mt-1 text-sm text-slate-500">[m
+[31m-                              {interview.email}[m
+[32m+[m[32m              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-medium text-slate-300 shadow-sm">[m
+[32m+[m[32m                <span className="h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_7px_rgba(125,211,252,0.55)]" />[m
+[32m+[m[32m                {interviews.length}{" "}[m
+[32m+[m[32m                {interviews.length === 1 ? "interview" : "interviews"}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m          {interviews.length === 0 ? ([m
+[32m+[m[32m            <div className="p-12 text-center sm:p-16">[m
+[32m+[m[32m              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-500">[m
+[32m+[m[32m                <svg[m
+[32m+[m[32m                  viewBox="0 0 24 24"[m
+[32m+[m[32m                  fill="none"[m
+[32m+[m[32m                  className="h-6 w-6"[m
+[32m+[m[32m                  stroke="currentColor"[m
+[32m+[m[32m                  strokeWidth="1.5"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <path[m
+[32m+[m[32m                    strokeLinecap="round"[m
+[32m+[m[32m                    strokeLinejoin="round"[m
+[32m+[m[32m                    d="M7 8h10M7 12h6m7 0a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                </svg>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <p className="mt-5 text-base font-medium text-slate-300">[m
+[32m+[m[32m                No interview records found.[m
+[32m+[m[32m              </p>[m
+[32m+[m
+[32m+[m[32m              <p className="mt-2 text-sm text-slate-500">[m
+[32m+[m[32m                Completed interviews will appear here.[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          ) : ([m
+[32m+[m[32m            <>[m
+[32m+[m[32m              {/* Mobile table hint */}[m
+[32m+[m[32m              <div className="flex items-center justify-between border-b border-white/[0.06] bg-black/10 px-5 py-3 text-xs text-slate-500 sm:hidden">[m
+[32m+[m[32m                <span>Swipe horizontally to view all columns</span>[m
+[32m+[m
+[32m+[m[32m                <svg[m
+[32m+[m[32m                  viewBox="0 0 20 20"[m
+[32m+[m[32m                  fill="none"[m
+[32m+[m[32m                  className="h-4 w-4 text-slate-600"[m
+[32m+[m[32m                  stroke="currentColor"[m
+[32m+[m[32m                  strokeWidth="1.5"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <path[m
+[32m+[m[32m                    strokeLinecap="round"[m
+[32m+[m[32m                    strokeLinejoin="round"[m
+[32m+[m[32m                    d="M3 10h14m-4-4 4 4-4 4"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                </svg>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              <div className="relative overflow-x-auto overscroll-x-contain">[m
+[32m+[m[32m                <table className="w-full min-w-[1120px]">[m
+[32m+[m[32m                  <thead>[m
+[32m+[m[32m                    <tr className="border-b border-white/10 bg-[#06111f]/95">[m
+[32m+[m[32m                      <th className="sticky left-0 z-30 whitespace-nowrap border-r border-white/[0.06] bg-[#06111f]/98 px-6 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-[8px_0_18px_-16px_rgba(0,0,0,0.9)]">[m
+[32m+[m[32m                        Applicant[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        Mobile[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        University[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        Course[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        Intake[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        Interview[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="whitespace-nowrap px-5 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">[m
+[32m+[m[32m                        Videos[m
+[32m+[m[32m                      </th>[m
+[32m+[m
+[32m+[m[32m                      <th className="sticky right-0 z-30 whitespace-nowrap border-l border-white/[0.06] bg-[#06111f]/98 px-6 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-[-8px_0_18px_-16px_rgba(0,0,0,0.9)]">[m
+[32m+[m[32m                        Action[m
+[32m+[m[32m                      </th>[m
+[32m+[m[32m                    </tr>[m
+[32m+[m[32m                  </thead>[m
+[32m+[m
+[32m+[m[32m                  <tbody className="divide-y divide-white/[0.065]">[m
+[32m+[m[32m                    {interviews.map((interview) => ([m
+[32m+[m[32m                      <tr[m
+[32m+[m[32m                        key={interview.interviewId}[m
+[32m+[m[32m                        className="group transition-colors duration-200 hover:bg-sky-200/[0.025]"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        <td className="sticky left-0 z-20 border-r border-white/[0.06] bg-[#0b1a2b] px-6 py-5 shadow-[8px_0_18px_-16px_rgba(0,0,0,0.9)] transition-colors duration-200 group-hover:bg-[#102235]">[m
+[32m+[m[32m                          <div className="flex items-center gap-3.5">[m
+[32m+[m[32m                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-300/10 bg-gradient-to-br from-sky-300/15 to-blue-500/10 text-sm font-semibold text-sky-100 shadow-sm transition-transform duration-200 group-hover:scale-105">[m
+[32m+[m[32m                              {interview.fullName[m
+[32m+[m[32m                                .trim()[m
+[32m+[m[32m                                .charAt(0)[m
+[32m+[m[32m                                .toUpperCase() || "A"}[m
+                             </div>[m
+[31m-                          </td>[m
+ [m
+[31m-                          <td className="whitespace-nowrap px-5 py-5 text-sm text-slate-300">[m
+[31m-                            {interview.phone || "—"}[m
+[31m-                          </td>[m
+[32m+[m[32m                            <div className="min-w-0">[m
+[32m+[m[32m                              <div className="font-semibold tracking-tight text-white">[m
+[32m+[m[32m                                {interview.fullName}[m
+[32m+[m[32m                              </div>[m
+ [m
+[31m-                          <td className="px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                              <div className="mt-1 text-xs text-slate-500">[m
+[32m+[m[32m                                {interview.email}[m
+[32m+[m[32m                              </div>[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                          {interview.phone || "—"}[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="max-w-[190px] px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                          <div[m
+[32m+[m[32m                            className="truncate"[m
+[32m+[m[32m                            title={interview.university}[m
+[32m+[m[32m                          >[m
+                             {interview.university || "—"}[m
+[31m-                          </td>[m
+[31m-[m
+[31m-                          <td className="px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="max-w-[190px] px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                          <div[m
+[32m+[m[32m                            className="truncate"[m
+[32m+[m[32m                            title={interview.course}[m
+[32m+[m[32m                          >[m
+                             {interview.course || "—"}[m
+[31m-                          </td>[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </td>[m
+ [m
+[31m-                          <td className="whitespace-nowrap px-5 py-5 text-sm text-slate-300">[m
+[32m+[m[32m                        <td className="whitespace-nowrap px-5 py-5">[m
+[32m+[m[32m                          <span className="text-sm text-slate-300">[m
+                             {interview.intake || "—"}[m
+[31m-                          </td>[m
+[31m-[m
+[31m-                          <td className="whitespace-nowrap px-5 py-5 text-sm text-slate-300">[m
+[31m-                            {formatInterviewDate([m
+[31m-                              interview.startedAt[m
+[31m-                            )}[m
+[31m-                          </td>[m
+[31m-[m
+[31m-                          <td className="whitespace-nowrap px-5 py-5 text-sm text-slate-300">[m
+[31m-                            {interview.totalVideos}[m
+[31m-                          </td>[m
+[31m-[m
+[31m-                          <td className="whitespace-nowrap px-5 py-5 text-right">[m
+[31m-                            <a[m
+[31m-                              href={`/admin/interviews/${interview.interviewId}`}[m
+[31m-                              className="inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"[m
+[32m+[m[32m                          </span>[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="whitespace-nowrap px-5 py-5">[m
+[32m+[m[32m                          <div className="flex items-center gap-2.5">[m
+[32m+[m[32m                            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.035] text-slate-400">[m
+[32m+[m[32m                              <svg[m
+[32m+[m[32m                                viewBox="0 0 20 20"[m
+[32m+[m[32m                                fill="none"[m
+[32m+[m[32m                                className="h-4 w-4"[m
+[32m+[m[32m                                stroke="currentColor"[m
+[32m+[m[32m                                strokeWidth="1.5"[m
+[32m+[m[32m                              >[m
+[32m+[m[32m                                <path[m
+[32m+[m[32m                                  strokeLinecap="round"[m
+[32m+[m[32m                                  strokeLinejoin="round"[m
+[32m+[m[32m                                  d="M10 5v5l3 2m4-2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"[m
+[32m+[m[32m                                />[m
+[32m+[m[32m                              </svg>[m
+[32m+[m[32m                            </div>[m
+[32m+[m
+[32m+[m[32m                            <div>[m
+[32m+[m[32m                              <div className="text-sm font-medium text-slate-300">[m
+[32m+[m[32m                                {formatInterviewDate([m
+[32m+[m[32m                                  interview.startedAt[m
+[32m+[m[32m                                )}[m
+[32m+[m[32m                              </div>[m
+[32m+[m
+[32m+[m[32m                              <div className="mt-0.5 text-[11px] text-slate-600">[m
+[32m+[m[32m                                Started[m
+[32m+[m[32m                              </div>[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="px-5 py-5">[m
+[32m+[m[32m                          <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.035] px-2.5 py-1.5">[m
+[32m+[m[32m                            <svg[m
+[32m+[m[32m                              viewBox="0 0 20 20"[m
+[32m+[m[32m                              fill="none"[m
+[32m+[m[32m                              className="h-3.5 w-3.5 text-slate-500"[m
+[32m+[m[32m                              stroke="currentColor"[m
+[32m+[m[32m                              strokeWidth="1.5"[m
+[32m+[m[32m                            >[m
+[32m+[m[32m                              <path[m
+[32m+[m[32m                                strokeLinecap="round"[m
+[32m+[m[32m                                strokeLinejoin="round"[m
+[32m+[m[32m                                d="m12.5 8.5-5-2.75v9.5l5-2.75m4 3A2.5 2.5 0 0 0 19 13V7a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 3 7v6a2.5 2.5 0 0 0 2.5 2.5h11Z"[m
+[32m+[m[32m                              />[m
+[32m+[m[32m                            </svg>[m
+[32m+[m
+[32m+[m[32m                            <span className="text-sm font-semibold text-slate-200">[m
+[32m+[m[32m                              {interview.totalVideos}[m
+[32m+[m[32m                            </span>[m
+[32m+[m
+[32m+[m[32m                            <span className="text-[11px] text-slate-500">[m
+[32m+[m[32m                              videos[m
+[32m+[m[32m                            </span>[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </td>[m
+[32m+[m
+[32m+[m[32m                        <td className="sticky right-0 z-20 border-l border-white/[0.06] bg-[#0b1a2b] px-6 py-5 text-right shadow-[-8px_0_18px_-16px_rgba(0,0,0,0.9)] transition-colors duration-200 group-hover:bg-[#102235]">[m
+[32m+[m[32m                          <a[m
+[32m+[m[32m                            href={`/admin/interviews/${interview.interviewId}`}[m
+[32m+[m[32m                            className="inline-flex items-center gap-2 rounded-xl border border-sky-200/10 bg-gradient-to-r from-sky-200/[0.08] to-blue-400/[0.06] px-4 py-2.5 text-sm font-semibold text-sky-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-200/25 hover:bg-sky-200/[0.13] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-300/30"[m
+[32m+[m[32m                          >[m
+[32m+[m[32m                            View Details[m
+[32m+[m
+[32m+[m[32m                            <svg[m
+[32m+[m[32m                              viewBox="0 0 20 20"[m
+[32m+[m[32m                              fill="none"[m
+[32m+[m[32m                              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"[m
+[32m+[m[32m                              stroke="currentColor"[m
+[32m+[m[32m                              strokeWidth="1.6"[m
+                             >[m
+[31m-                              View Details[m
+[31m-                            </a>[m
+[31m-                          </td>[m
+[31m-                        </tr>[m
+[31m-                      ))}[m
+[31m-                    </tbody>[m
+[31m-                  </table>[m
+[31m-                </div>[m
+[32m+[m[32m                              <path[m
+[32m+[m[32m                                strokeLinecap="round"[m
+[32m+[m[32m                                strokeLinejoin="round"[m
+[32m+[m[32m                                d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5"[m
+[32m+[m[32m                              />[m
+[32m+[m[32m                            </svg>[m
+[32m+[m[32m                          </a>[m
+[32m+[m[32m                        </td>[m
+[32m+[m[32m                      </tr>[m
+[32m+[m[32m                    ))}[m
+[32m+[m[32m                  </tbody>[m
+[32m+[m[32m                </table>[m
+               </div>[m
+[31m-            )}[m
+[32m+[m[32m            </>[m
+[32m+[m[32m          )}[m
+[32m+[m
+[32m+[m[32m          <div className="border-t border-white/10 px-6 py-4 sm:px-8">[m
+[32m+[m[32m            <p className="text-xs leading-5 text-slate-600">[m
+[32m+[m[32m              Interview recordings are securely stored and are accessible[m
+[32m+[m[32m              through authorized administration controls only.[m
+[32m+[m[32m            </p>[m
+           </div>[m
+[31m-        </div>[m
+[32m+[m[32m        </section>[m
+[32m+[m
+[32m+[m[32m        <footer className="px-2 py-6 text-center text-xs text-slate-600">[m
+[32m+[m[32m          Pre-CAS Mock Interview • Idyllic Education[m
+[32m+[m[32m        </footer>[m
+       </div>[m
+     </main>[m
+   );[m

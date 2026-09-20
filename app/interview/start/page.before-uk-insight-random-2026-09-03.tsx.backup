@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -14,7 +14,6 @@ import {
 } from "@/data/questions";
 
 import {
-  getInterviewSession,
   saveInterviewAnswer,
   saveInterviewSession,
   getSavedInterviewAnswers,
@@ -35,9 +34,6 @@ export default function InterviewStartPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const interviewVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const microphoneAnalyserRef = useRef<AnalyserNode | null>(null);
-  const microphoneDetectedRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -56,10 +52,6 @@ export default function InterviewStartPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const [cameraReady, setCameraReady] = useState(false);
-  const [cameraTestPassed, setCameraTestPassed] = useState(false);
-  const [cameraTestRunning, setCameraTestRunning] = useState(false);
-  const [cameraTestSeconds, setCameraTestSeconds] = useState(10);
-  const [microphoneDetected, setMicrophoneDetected] = useState(false);
   const [recording, setRecording] = useState(false);
 
   const [interviewPhase, setInterviewPhase] = useState<
@@ -119,152 +111,18 @@ export default function InterviewStartPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [university, setUniversity] = useState("");
-  const [universitySearch, setUniversitySearch] = useState("");
-  const [universityOpen, setUniversityOpen] = useState(false);
-const ukUniversities = [
-  "Abertay University",
-  "Aberystwyth University",
-  "Anglia Ruskin University",
-  "Arden University",
-  "Arts University Bournemouth",
-  "Arts University Plymouth",
-  "Aston University",
-  "Bangor University",
-  "Bath Spa University",
-  "Birkbeck, University of London",
-  "Birmingham City University",
-  "Birmingham Newman University",
-  "Bournemouth University",
-  "Brunel University London",
-  "Buckinghamshire New University",
-  "Canterbury Christ Church University",
-  "Cardiff Metropolitan University",
-  "Cardiff University",
-  "City St Georgeâ€™s, University of London",
-  "Coventry University",
-  "Cranfield University",
-  "De Montfort University",
-  "Durham University",
-  "Edge Hill University",
-  "Edinburgh Napier University",
-  "Falmouth University",
-  "Glasgow Caledonian University",
-  "Goldsmiths, University of London",
-  "Harper Adams University",
-  "Hartpury University",
-  "Heriot-Watt University",
-  "Imperial College London",
-  "Keele University",
-  "Kingston University",
-  "Kingâ€™s College London",
-  "Lancaster University",
-  "Leeds Beckett University",
-  "Leeds Trinity University",
-  "Lincoln Bishop University",
-  "Liverpool Hope University",
-  "Liverpool John Moores University",
-  "London Metropolitan University",
-  "London School of Economics and Political Science",
-  "London South Bank University",
-  "Loughborough University",
-  "Manchester Metropolitan University",
-  "Middlesex University",
-  "Newcastle University",
-  "Northumbria University",
-  "Norwich University of the Arts",
-  "Nottingham Trent University",
-  "Oxford Brookes University",
-  "Plymouth Marjon University",
-  "Queen Margaret University",
-  "Queen Mary University of London",
-  "Queenâ€™s University Belfast",
-  "Ravensbourne University London",
-  "Regentâ€™s University London",
-  "Robert Gordon University",
-  "Royal Central School of Speech & Drama",
-  "Royal College of Art",
-  "Royal College of Music",
-  "Royal Holloway, University of London",
-  "Royal Veterinary College",
-  "Sheffield Hallam University",
-  "SOAS University of London",
-  "Solent University",
-  "St Maryâ€™s University, Twickenham",
-  "Swansea University",
-  "Teesside University",
-  "The Open University",
-  "Ulster University",
-  "University College London",
-  "University for the Creative Arts",
-  "University of Aberdeen",
-  "University of Bath",
-  "University of Bedfordshire",
-  "University of Birmingham",
-  "University of Bradford",
-  "University of Brighton",
-  "University of Bristol",
-  "University of Buckingham",
-  "University of Cambridge",
-  "University of Chester",
-  "University of Chichester",
-  "University of Cumbria",
-  "University of Derby",
-  "University of Dundee",
-  "University of East Anglia",
-  "University of East London",
-  "University of Edinburgh",
-  "University of Essex",
-  "University of Exeter",
-  "University of Glasgow",
-  "University of Gloucestershire",
-  "University of Greater Manchester",
-  "University of Greenwich",
-  "University of Hertfordshire",
-  "University of Huddersfield",
-  "University of Hull",
-  "University of Kent",
-  "University of Lancashire",
-  "University of Leeds",
-  "University of Leicester",
-  "University of Lincoln",
-  "University of Liverpool",
-  "University of Manchester",
-  "University of Northampton",
-  "University of Nottingham",
-  "University of Oxford",
-  "University of Plymouth",
-  "University of Portsmouth",
-  "University of Reading",
-  "University of Roehampton",
-  "University of Salford",
-  "University of Sheffield",
-  "University of South Wales",
-  "University of Southampton",
-  "University of St Andrews",
-  "University of Staffordshire",
-  "University of Stirling",
-  "University of Strathclyde",
-  "University of Suffolk",
-  "University of Sunderland",
-  "University of Surrey",
-  "University of Sussex",
-  "University of the Arts London",
-  "University of the Highlands and Islands",
-  "University of the West of England, Bristol",
-  "University of the West of Scotland",
-  "University of Wales Trinity Saint David",
-  "University of Warwick",
-  "University of West London",
-  "University of Westminster",
-  "University of Winchester",
-  "University of Wolverhampton",
-  "University of Worcester",
-  "University of York",
-  "Wrexham University",
-  "York St John University",
-];
   const [course, setCourse] = useState("");
-const ukInsights = [
+  const [intake, setIntake] = useState("");
+
+  const [interviewId] = useState(
+    () =>
+      "PRECAS-" +
+      new Date().getFullYear() +
+      "-" +
+      Math.random().toString(36).substring(2, 8).toUpperCase()
+  );
+
+  const ukInsights = [
     { category: "UK Insight", title: "A country of four nations", description: "England, Scotland, Wales and Northern Ireland each bring their own character and culture." },
     { category: "UK Insight", title: "A truly international destination", description: "Students from many different countries choose the UK for higher education each year." },
     { category: "UK Insight", title: "A tradition of learning", description: "The UK has a long history of universities, scholarship and academic discovery." },
@@ -293,127 +151,13 @@ const ukInsights = [
     { category: "Explore the UK", title: "Museums, landmarks and culture", description: "Students can explore a wide range of museums, galleries, landmarks and cultural attractions." },
     { category: "Explore the UK", title: "Different cultures across one country", description: "Each part of the UK has its own traditions, landscapes, communities and cultural character." },
     { category: "Explore the UK", title: "Cities and countryside", description: "From busy university cities to peaceful countryside and coastlines, the UK offers varied surroundings." },
-    { category: "Explore the UK", title: "Make your own UK experience", description: "Your time in the UK can be about more than studying   it can also be about discovering new places and experiences." },
+    { category: "Explore the UK", title: "Make your own UK experience", description: "Your time in the UK can be about more than studying � it can also be about discovering new places and experiences." },
   ];
-
-  const [intake, setIntake] = useState("");
-
-  const [selectedUkInsight, setSelectedUkInsight] = useState(ukInsights[0]);
-
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * ukInsights.length);
-    setSelectedUkInsight(ukInsights[randomIndex]);
-  }, []);
-
-  const [interviewId, setInterviewId] = useState(() => { if (typeof window !== "undefined") { const existingId = sessionStorage.getItem("precas-active-interview-id"); if (existingId) { return existingId; } } const newId = "PRECAS-" + new Date().getFullYear() + "-" + Math.random().toString(36).substring(2, 8).toUpperCase(); if (typeof window !== "undefined") { sessionStorage.setItem("precas-active-interview-id", newId); } return newId; });
-
-
-  /*
-   * RESTORE ACTIVE INTERVIEW SESSION
-   */
-  useEffect(() => {
-    let active = true;
-
-    const restoreSession = async () => {
-      try {
-        const savedSession = await getInterviewSession(interviewId);
-
-        if (!active || !savedSession) {
-          return;
-        }
-
-        setInterviewStartedAt(savedSession.startedAt);
-        setInterviewStarted(true);
-      } catch (loadError) {
-        console.error(
-          "Unable to restore active interview session:",
-          loadError
-        );
-      }
-    };
-
-    restoreSession();
-
-        return () => {
-      active = false;
-    };
-  }, [interviewId]);
-
-  /*
-   * RESTORE CURRENT QUESTION
-   */
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const savedQuestionIndex = sessionStorage.getItem(
-      "precas-active-interview-current-question"
-    );
-
-    if (savedQuestionIndex !== null) {
-      const parsedIndex = Number(savedQuestionIndex);
-
-      if (Number.isInteger(parsedIndex) && parsedIndex >= 0) {
-        setCurrentQuestion(parsedIndex);
-      }
-    }
-  }, []);
-
-  /*
- * SAVE CURRENT QUESTION
- */
-useEffect(() => {
-  if (typeof window === "undefined" || !interviewStarted) {
-    return;
-  }
-
-  sessionStorage.setItem(
-    "precas-active-interview-current-question",
-    String(currentQuestion)
-  );
-}, [currentQuestion, interviewStarted]);
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    sessionStorage.setItem(
-      "precas-active-interview-current-question",
-      String(currentQuestion)
-    );
-  }, [currentQuestion]);
 
   /*
    * LOAD QUESTIONS
    */
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedQuestions = sessionStorage.getItem(
-        "precas-active-interview-questions"
-      );
-
-      if (savedQuestions) {
-        try {
-          const questions = JSON.parse(savedQuestions) as Question[];
-
-          setInterviewQuestions(questions);
-          setQuestionStatus(
-            questions.map(() => "unanswered")
-          );
-          return;
-        } catch (loadError) {
-          console.error(
-            "Unable to restore saved interview questions:",
-            loadError
-          );
-          sessionStorage.removeItem(
-            "precas-active-interview-questions"
-          );
-        }
-      }
-    }
-
     const questions = getRandomInterviewQuestions();
 
     setInterviewQuestions(questions);
@@ -580,15 +324,6 @@ useEffect(() => {
       });
 
       streamRef.current = stream;
-
-      const audioContext = new AudioContext();
-      const analyser = audioContext.createAnalyser();
-      const microphoneSource = audioContext.createMediaStreamSource(stream);
-
-      microphoneSource.connect(analyser);
-
-      audioContextRef.current = audioContext;
-      microphoneAnalyserRef.current = analyser;
       console.log("Camera tracks:", stream.getVideoTracks().length);
 console.log("Microphone tracks:", stream.getAudioTracks().length);
 
@@ -597,10 +332,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
       }
 
       setCameraReady(true);
-      setCameraTestPassed(false);
-      setMicrophoneDetected(false);
-      setCameraTestSeconds(10);
-      setCameraTestRunning(true);
     } catch (cameraError) {
       console.error(cameraError);
 
@@ -613,83 +344,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
   /*
    * ATTACH CAMERA STREAM TO VIDEO PREVIEWS
    */
-  useEffect(() => {
-    if (!cameraTestRunning) {
-      return;
-    }
-
-    const analyser = microphoneAnalyserRef.current;
-
-    if (!analyser) {
-      setCameraTestRunning(false);
-      setError("Microphone test could not be started. Please try again.");
-      return;
-    }
-
-    let animationFrameId: number | null = null;
-    let elapsedSeconds = 0;
-    let lastSecond = Date.now();
-
-    microphoneDetectedRef.current = false;
-
-    const dataArray = new Uint8Array(analyser.fftSize);
-
-    const monitorMicrophone = () => {
-      analyser.getByteTimeDomainData(dataArray);
-
-      let sum = 0;
-
-      for (let i = 0; i < dataArray.length; i++) {
-        const normalized = (dataArray[i] - 128) / 128;
-        sum += normalized * normalized;
-      }
-
-      const volume = Math.sqrt(sum / dataArray.length);
-
-      if (volume > 0.03) {
-        microphoneDetectedRef.current = true;
-        setMicrophoneDetected(true);
-      }
-
-      const now = Date.now();
-
-      if (now - lastSecond >= 1000) {
-        elapsedSeconds += 1;
-        lastSecond = now;
-
-        setCameraTestSeconds(Math.max(0, 10 - elapsedSeconds));
-
-        if (elapsedSeconds >= 10) {
-          setCameraTestRunning(false);
-
-          const videoTrack = streamRef.current?.getVideoTracks().some(
-            (track) => track.readyState === "live"
-          );
-
-          if (videoTrack && microphoneDetectedRef.current) {
-            setCameraTestPassed(true);
-          } else {
-            setCameraTestPassed(false);
-            setError(
-              "We could not detect your microphone. Please speak during the test and try again."
-            );
-          }
-
-          return;
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(monitorMicrophone);
-    };
-
-    monitorMicrophone();
-
-    return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [cameraTestRunning]);
   useEffect(() => {
     if (!cameraReady || !streamRef.current) {
       return;
@@ -713,11 +367,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
    */
   const startInterview = async () => {
     setError("");
-
-    if (!cameraTestPassed) {
-      setError("Please complete the camera and microphone test before starting the interview.");
-      return;
-    }
 
     if (!fullName.trim()) {
       setError("Please enter your full name before starting the interview.");
@@ -845,12 +494,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
     }
 
     setInterviewQuestions(combinedQuestions);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(
-        "precas-active-interview-questions",
-        JSON.stringify(combinedQuestions)
-      );
-    }
 
     setQuestionStatus(
       combinedQuestions.map(() => "unanswered")
@@ -873,8 +516,7 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
 await saveInterviewSession({
   interviewId,
   fullName: fullName.trim(),
-email: email.trim(),
-phone: phoneDigits,
+  phone: phoneDigits,
   university: university.trim(),
   course: course.trim(),
   intake: intake.trim(),
@@ -1120,42 +762,6 @@ phone: phoneDigits,
           if (question) {
             setSavingAnswer(true);
 
-            /*
-             * PERMANENT VERCEL BLOB UPLOAD
-             */
-            const { upload } = await import("@vercel/blob/client");
-
-            const blobPath =
-              `interviews/${interviewId}/` +
-              `Q${String(currentQuestion + 1).padStart(2, "0")}.webm`;
-
-         const uploadedBlob = await upload(blobPath, blob, {
-  access: "private",
-  handleUploadUrl: "/api/interview/upload",
-  contentType: "video/webm",
-});
-
-/*
- * KEEP TRACK OF THE PERMANENT BLOB PATH
- */
-const storageKey = `precas-interview-blob-paths-${interviewId}`;
-
-const existingPaths = JSON.parse(
-  sessionStorage.getItem(storageKey) ?? "[]"
-) as string[];
-
-if (!existingPaths.includes(uploadedBlob.pathname)) {
-  existingPaths.push(uploadedBlob.pathname);
-}
-
-sessionStorage.setItem(
-  storageKey,
-  JSON.stringify(existingPaths)
-);
-
-            /*
-             * KEEP EXISTING LOCAL SAVE
-             */
             const answerTime = question.answerTime ?? 90;
 
             await saveInterviewAnswer(
@@ -1173,7 +779,7 @@ sessionStorage.setItem(
           }
         } catch (saveError) {
           console.error(
-            "Unable to save or upload recorded interview answer:",
+            "Unable to save recorded interview answer:",
             saveError
           );
         } finally {
@@ -1198,85 +804,16 @@ sessionStorage.setItem(
             nextQuestion?.preparationTime ?? 15
           );
         } else {
-  /*
-   * Question 16 is complete.
-   * Create the permanent interview manifest
-   * before showing the final completion screen.
-   */
-  try {
-    const storageKey = `precas-interview-blob-paths-${interviewId}`;
-
-    const blobPaths = JSON.parse(
-      sessionStorage.getItem(storageKey) ?? "[]"
-    ) as string[];
-
-    if (blobPaths.length > 16) {
-      throw new Error(
-        `Too many uploaded videos. Found ${blobPaths.length}.`
-      );
-    }
-
-    const manifestResponse = await fetch(
-      "/api/interview/manifest",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          interviewId,
-          fullName: fullName.trim(),
-          email: email.trim(),
-          phone: phone.replace(/\D/g, ""),
-          university: university.trim(),
-          course: course.trim(),
-          intake: intake.trim(),
-          startedAt: interviewStartedAt ?? new Date().toISOString(),
-          blobPaths,
-        }),
-      }
-    );
-if (!manifestResponse.ok) {
-  const manifestError = await manifestResponse.json();
-
-  throw new Error(
-    manifestError.error ??
-      "Unable to create the interview manifest."
-  );
-}
-
-const manifestResult = await manifestResponse.json();
-
-if (
-  typeof manifestResult.accessToken !== "string" ||
-  !manifestResult.accessToken
-) {
-  throw new Error(
-    "Interview manifest was created without a download token."
-  );
-}
-
-sessionStorage.setItem(
-  `precas-interview-download-token-${interviewId}`,
-  manifestResult.accessToken
-);
-
-
-    setInterviewComplete(true);
-    setInterviewStarted(false);
-    setInterviewPhase("preparation");
-    setSeconds(0);
-  } catch (manifestError) {
-    console.error(
-      "Unable to finalize interview manifest:",
-      manifestError
-    );
-
-    setError(
-      "Your recordings were uploaded, but we could not finalize the interview. Please do not close this page."
-    );
-  }
-}
+          /*
+           * Question 16 is complete.
+           * Stop the interview and show the final
+           * recording review screen.
+           */
+          setInterviewComplete(true);
+          setInterviewStarted(false);
+          setInterviewPhase("preparation");
+          setSeconds(0);
+        }
       };
       recorder.start();
 
@@ -1293,44 +830,7 @@ sessionStorage.setItem(
     }
   };
   /*
-   * DOWNLOAD A RECORDED VIDEO FROM THE LOCAL RECORDING AVAILABLE ON THIS PAGE
-   */
-  const downloadRecordedVideo = (questionIndex: number) => {
-    try {
-      setError("");
-
-      const videoUrl = recordedVideos[questionIndex];
-
-      if (!videoUrl) {
-        throw new Error(
-          "The recording for this question is not available on this page."
-        );
-      }
-
-      const link = document.createElement("a");
-      link.href = videoUrl;
-      link.download = `Pre-CAS-Interview-Q${String(questionIndex + 1).padStart(2, "0")}.webm`;
-      link.style.display = "none";
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (downloadError) {
-      console.error(
-        "Unable to download recorded video:",
-        downloadError
-      );
-
-      setError(
-        downloadError instanceof Error
-          ? downloadError.message
-          : "Unable to download the interview recording."
-      );
-    }
-  };
-
-  /*
-   * DOWNLOAD ALL RECORDED VIDEOS FROM THE LOCAL RECORDINGS AVAILABLE ON THIS PAGE
+   * DOWNLOAD ALL RECORDED VIDEOS
    */
   const downloadAllRecordedVideos = async () => {
     const entries = Object.entries(recordedVideos);
@@ -1347,6 +847,7 @@ sessionStorage.setItem(
 
       for (const [questionIndex, videoUrl] of entries) {
         const index = Number(questionIndex);
+
         const response = await fetch(videoUrl);
         const blob = await response.blob();
 
@@ -1365,26 +866,19 @@ sessionStorage.setItem(
 
       link.href = downloadUrl;
       link.download = `Pre-CAS-Interview-${interviewId}.zip`;
-      link.style.display = "none";
 
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      setTimeout(() => {
-        URL.revokeObjectURL(downloadUrl);
-      }, 1000);
+      URL.revokeObjectURL(downloadUrl);
     } catch (downloadError) {
       console.error(
-        "Unable to download all recorded videos:",
+        "Unable to download recorded videos:",
         downloadError
       );
 
-      setError(
-        downloadError instanceof Error
-          ? downloadError.message
-          : "Unable to download all interview recordings."
-      );
+      setError("Unable to create the interview video download.");
     }
   };
 
@@ -1492,110 +986,7 @@ sessionStorage.setItem(
         nextQuestion?.preparationTime ?? 15
       );
     } else {
-      /*
-       * Final question skipped.
-       *
-       * The candidate may finish the interview with fewer than 16 videos.
-       * Restore the recordings already saved locally, then create the same
-       * permanent manifest and secure download token used when the final
-       * question is answered.
-       */
-      try {
-        const answers = await getSavedInterviewAnswers();
-        const restoredVideos: Record<number, string> = {};
-
-        answers.forEach((answer) => {
-          if (answer.interviewId !== interviewId || !answer.videoBlob) {
-            return;
-          }
-
-          restoredVideos[answer.questionIndex] = URL.createObjectURL(
-            answer.videoBlob
-          );
-        });
-
-        setRecordedVideos(restoredVideos);
-      } catch (loadError) {
-        console.error(
-          "Unable to restore recorded interview videos:",
-          loadError
-        );
-      }
-
-      try {
-        const storageKey = `precas-interview-blob-paths-${interviewId}`;
-
-        const blobPaths = JSON.parse(
-          sessionStorage.getItem(storageKey) ?? "[]"
-        ) as string[];
-
-        if (blobPaths.length > 16) {
-          throw new Error(
-            `Too many uploaded videos. Found ${blobPaths.length}.`
-          );
-        }
-
-        const manifestResponse = await fetch(
-          "/api/interview/manifest",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              interviewId,
-              fullName: fullName.trim(),
-              email: email.trim(),
-              phone: phone.replace(/\D/g, ""),
-              university: university.trim(),
-              course: course.trim(),
-              intake: intake.trim(),
-              startedAt:
-                interviewStartedAt ?? new Date().toISOString(),
-              blobPaths,
-            }),
-          }
-        );
-
-        if (!manifestResponse.ok) {
-          const manifestError = await manifestResponse.json();
-
-          throw new Error(
-            manifestError.error ??
-              "Unable to create the interview manifest."
-          );
-        }
-
-        const manifestResult = await manifestResponse.json();
-
-        if (
-          typeof manifestResult.accessToken !== "string" ||
-          !manifestResult.accessToken
-        ) {
-          throw new Error(
-            "Interview manifest was created without a download token."
-          );
-        }
-
-        sessionStorage.setItem(
-          `precas-interview-download-token-${interviewId}`,
-          manifestResult.accessToken
-        );
-
-        setInterviewComplete(true);
-        setInterviewStarted(false);
-        setInterviewPhase("preparation");
-        setSeconds(0);
-      } catch (manifestError) {
-        console.error(
-          "Unable to finalize interview manifest:",
-          manifestError
-        );
-
-        setError(
-          "Your recordings were uploaded, but we could not finalize the interview. Please do not close this page."
-        );
-      }
+      setInterviewComplete(true);
     }
   };
 
@@ -1603,28 +994,6 @@ sessionStorage.setItem(
    * RESTART
    */
   const restartInterview = async () => {
-    const previousInterviewId = interviewId;
-    const newInterviewId =
-      "PRECAS-" +
-      new Date().getFullYear() +
-      "-" +
-      Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem(
-        `precas-interview-blob-paths-${previousInterviewId}`
-      );
-      sessionStorage.removeItem(
-        `precas-interview-download-token-${previousInterviewId}`
-      );
-      sessionStorage.setItem(
-        "precas-active-interview-id",
-        newInterviewId
-      );
-    }
-
-    setInterviewId(newInterviewId);
-
     try {
       await clearSavedInterviewAnswers();
     } catch (clearError) {
@@ -1777,15 +1146,6 @@ sessionStorage.setItem(
                 <div className="h-5 w-px bg-white/25" />
 
                 <Link
-                  href="/interview/counsellor"
-                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
-                >
-                  Counsellor
-                </Link>
-
-                <div className="h-5 w-px bg-white/25" />
-
-                <Link
                   href="/interview/how-to-use"
                   className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
                 >
@@ -1794,7 +1154,7 @@ sessionStorage.setItem(
 
                 <div className="h-5 w-px bg-white/25" />
 
-                <p className="rounded-lg bg-white/10 px-4 py-2 text-right text-sm font-bold uppercase tracking-[0.16em] text-white sm:text-base">
+                <p className="text-right text-sm font-bold uppercase tracking-[0.16em] text-white drop-shadow-[0_0_7px_rgba(57,168,69,0.75)] sm:text-base">
                   Pre-CAS Interview Simulator
                 </p>
               </div>
@@ -1832,13 +1192,14 @@ sessionStorage.setItem(
 
                   <div className="mt-64 max-w-[430px]">
                     <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#53616b]">
-                      {selectedUkInsight.category}
+                      UK Insight
                     </p>
                     <p className="mt-2 text-sm font-semibold leading-5 text-[#17212b]">
-                      {selectedUkInsight.title}
+                      Four countries, one United Kingdom.
                     </p>
                     <p className="mt-1 text-xs leading-5 text-[#596873]">
-                      {selectedUkInsight.description}
+                      England, Scotland, Wales and Northern Ireland each bring
+                      their own character and culture.
                     </p>
                   </div>
                 </div>
@@ -1918,74 +1279,14 @@ sessionStorage.setItem(
                         University
                       </label>
 
-                      <div className="relative">
-                        <input
-                          value={universitySearch}
-                          onChange={(event) => {
-                            setUniversitySearch(event.target.value);
-                            setUniversityOpen(true);
-                          }}
-                          onFocus={() => setUniversityOpen(true)}
-                          placeholder={university || "Search university"}
-                          className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 pr-10 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => setUniversityOpen((open) => !open)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7b858d] hover:text-[#303b45]"
-                          aria-label="Open university list"
-                        >
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
-
-                        {universityOpen && (
-                          <div className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-[#dfe2e4] bg-white p-1 shadow-lg">
-                            {ukUniversities
-                              .filter((name) =>
-                                name
-                                  .toLowerCase()
-                                  .includes(universitySearch.toLowerCase())
-                              )
-                              .map((name) => (
-                                <button
-                                  key={name}
-                                  type="button"
-                                  onMouseDown={(event) => {
-                                    event.preventDefault();
-                                    setUniversity(name);
-                                    setUniversitySearch("");
-                                    setUniversityOpen(false);
-                                  }}
-                                  className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#17212b] transition hover:bg-[#faf0f1] hover:text-[#b51f2b]"
-                                >
-                                  {name}
-                                </button>
-                              ))}
-
-                            {ukUniversities.filter((name) =>
-                              name
-                                .toLowerCase()
-                                .includes(universitySearch.toLowerCase())
-                            ).length === 0 && (
-                              <div className="px-3 py-3 text-sm text-[#7b858d]">
-                                No university found.
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      <input
+                        value={university}
+                        onChange={(event) =>
+                          setUniversity(event.target.value)
+                        }
+                        placeholder="Your university"
+                        className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
+                      />
                     </div>
 
                     <div>
@@ -2020,17 +1321,6 @@ sessionStorage.setItem(
                   </div>
 
                   <div className="mt-7 rounded-xl border border-[#e3e8f5] bg-[#f7f9ff] px-4 py-3.5">
-                    {cameraReady && (
-                      <div className="mb-4 overflow-hidden rounded-xl border border-[#dfe2e4] bg-black">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          muted
-                          playsInline
-                          className="aspect-video w-full object-cover"
-                        />
-                      </div>
-                    )}
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-xs font-semibold text-[#303b45]">
@@ -2038,28 +1328,18 @@ sessionStorage.setItem(
                         </p>
 
                         <p className="mt-1 text-[11px] text-[#8a9298]">
-                          {cameraTestRunning
-                            ? `Testing... ${cameraTestSeconds}s`
-                            : cameraTestPassed
-                              ? "Camera & microphone ready"
-                              : cameraReady
-                                ? "Test failed - try again"
-                                : "Required before the interview"}
+                          {cameraReady
+                            ? "Ready to record"
+                            : "Required before the interview"}
                         </p>
                       </div>
 
                       <button
                         onClick={startCamera}
-                        disabled={cameraTestRunning || cameraTestPassed}
+                        disabled={cameraReady}
                         className="shrink-0 rounded-lg border border-[#243f9f]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#243f9f]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
                       >
-                        {cameraTestRunning
-                          ? "Testing..."
-                          : cameraTestPassed
-                            ? "Ready"
-                            : cameraReady
-                              ? "Try Again"
-                              : "Check"}
+                        {cameraReady ? "Ready" : "Check"}
                       </button>
                     </div>
                   </div>
@@ -2142,13 +1422,14 @@ sessionStorage.setItem(
 
                   <div className="mt-64 max-w-[430px]">
                     <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#53616b]">
-                      {selectedUkInsight.category}
+                      UK Insight
                     </p>
                     <p className="mt-2 text-sm font-semibold leading-5 text-[#17212b]">
-                      {selectedUkInsight.title}
+                      Four countries, one United Kingdom.
                     </p>
                     <p className="mt-1 text-xs leading-5 text-[#596873]">
-                      {selectedUkInsight.description}
+                      England, Scotland, Wales and Northern Ireland each bring
+                      their own character and culture.
                     </p>
                   </div>
             </div>
@@ -2394,13 +1675,13 @@ sessionStorage.setItem(
                           className="w-full rounded-2xl border border-white/10 bg-black"
                         />
 
-                        <button
-                          type="button"
-                          onClick={() => downloadRecordedVideo(index)}
+                        <a
+                          href={videoUrl}
+                          download={`Pre-CAS-Interview-Q${String(index + 1).padStart(2, "0")}.webm`}
                           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
                         >
                           Download Video
-                        </button>
+                        </a>
                       </div>
                     );
                   }
@@ -2682,27 +1963,6 @@ return (
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

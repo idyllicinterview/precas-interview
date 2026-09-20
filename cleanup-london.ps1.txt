@@ -1,0 +1,131 @@
+$ErrorActionPreference = "Stop"
+
+try {
+    Set-Location "C:\Users\MSI\Documents\precas-interview"
+
+    $path = ".\app\interview\start\page.tsx"
+    $backup = ".\app\interview\start\page.tsx.before-london-cleanup-2"
+
+    Write-Host ""
+    Write-Host "PRE-CAS LONDON ARTWORK CLEANUP" -ForegroundColor Cyan
+    Write-Host "================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    if (-not (Test-Path $path)) {
+        throw "page.tsx was not found."
+    }
+
+    Write-Host "Creating backup..." -ForegroundColor Yellow
+    Copy-Item $path $backup -Force
+
+    $content = Get-Content $path -Raw
+
+    $startMarker = "{/* Large London visual */}"
+    $endMarker = "{/* Main content */}"
+
+    $startIndex = $content.IndexOf($startMarker)
+    $endIndex = $content.IndexOf($endMarker)
+
+    if ($startIndex -lt 0) {
+        throw "Could not find the Large London visual section."
+    }
+
+    if ($endIndex -lt 0) {
+        throw "Could not find the Main content section."
+    }
+
+    if ($endIndex -le $startIndex) {
+        throw "The London visual section boundaries are invalid."
+    }
+
+    $newVisual = @'
+{/* Large London visual */}
+<div className="pointer-events-none absolute inset-y-0 left-[5%] hidden w-[62%] overflow-visible lg:block">
+
+  <img
+    ref={parallaxImageRef}
+    src="/uk-watercolor.png"
+    alt="London"
+    className={`absolute left-1/2 top-1/2 h-[82%] w-[92%] -translate-x-1/2 -translate-y-1/2 object-contain transition-[filter,opacity] duration-[1800ms] ease-in-out ${
+      timeOfDay === "morning"
+        ? "brightness-[1.02] saturate-[0.90] opacity-[0.84]"
+        : timeOfDay === "day"
+          ? "brightness-[0.98] saturate-[0.94] opacity-[0.84]"
+          : timeOfDay === "evening"
+            ? "brightness-[0.92] saturate-[0.88] opacity-[0.80]"
+            : "brightness-[0.78] saturate-[0.72] opacity-[0.74]"
+    }`}
+    style={{
+      transition:
+        "transform 180ms ease-out, filter 1800ms ease, opacity 1800ms ease",
+      willChange: "transform, filter, opacity",
+      mixBlendMode: "multiply",
+      maskImage:
+        "radial-gradient(ellipse 76% 74% at 50% 50%, black 35%, rgba(0,0,0,0.92) 54%, rgba(0,0,0,0.48) 72%, transparent 96%)",
+      WebkitMaskImage:
+        "radial-gradient(ellipse 76% 74% at 50% 50%, black 35%, rgba(0,0,0,0.92) 54%, rgba(0,0,0,0.48) 72%, transparent 96%)",
+    }}
+  />
+
+  <div
+    className={`absolute inset-[-10%] z-20 pointer-events-none transition-opacity duration-[1800ms] ${
+      timeOfDay === "morning"
+        ? "opacity-100 bg-[radial-gradient(ellipse_at_68%_34%,rgba(255,225,175,0.10),transparent_48%)]"
+        : timeOfDay === "evening"
+          ? "opacity-100 bg-[radial-gradient(ellipse_at_68%_34%,rgba(255,169,91,0.12),transparent_48%)]"
+          : timeOfDay === "night"
+            ? "opacity-100 bg-[radial-gradient(ellipse_at_68%_30%,rgba(74,106,153,0.12),transparent_48%)]"
+            : "opacity-0"
+    }`}
+  />
+
+</div>
+
+'@
+
+    Write-Host "Replacing the complete London artwork section..." -ForegroundColor Yellow
+
+    $updated = (
+        $content.Substring(0, $startIndex) +
+        $newVisual +
+        $content.Substring($endIndex)
+    )
+
+    [System.IO.File]::WriteAllText(
+        (Resolve-Path $path),
+        $updated,
+        [System.Text.UTF8Encoding]::new($false)
+    )
+
+    Write-Host ""
+    Write-Host "SUCCESS: London artwork cleanup applied." -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "Verification:" -ForegroundColor Cyan
+
+    Select-String -Path $path -Pattern `
+        "Large London visual",
+        "object-contain",
+        "mixBlendMode",
+        "maskImage"
+
+    Write-Host ""
+    Write-Host "Backup:" -ForegroundColor DarkGray
+    Write-Host $backup -ForegroundColor DarkGray
+
+    Write-Host ""
+    Write-Host "NEXT STEP:" -ForegroundColor Yellow
+    Write-Host "Run: npm run build" -ForegroundColor White
+    Write-Host ""
+
+}
+catch {
+    Write-Host ""
+    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "NO FURTHER CHANGES WERE MADE AFTER THE ERROR." -ForegroundColor Red
+    Write-Host ""
+}
+
+Write-Host ""
+Read-Host "Press ENTER to close this script"

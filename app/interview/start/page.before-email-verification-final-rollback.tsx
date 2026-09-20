@@ -35,9 +35,6 @@ export default function InterviewStartPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const interviewVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const microphoneAnalyserRef = useRef<AnalyserNode | null>(null);
-  const microphoneDetectedRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -56,10 +53,6 @@ export default function InterviewStartPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const [cameraReady, setCameraReady] = useState(false);
-  const [cameraTestPassed, setCameraTestPassed] = useState(false);
-  const [cameraTestRunning, setCameraTestRunning] = useState(false);
-  const [cameraTestSeconds, setCameraTestSeconds] = useState(10);
-  const [microphoneDetected, setMicrophoneDetected] = useState(false);
   const [recording, setRecording] = useState(false);
 
   const [interviewPhase, setInterviewPhase] = useState<
@@ -75,6 +68,10 @@ export default function InterviewStartPage() {
   const [error, setError] = useState("");
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [savingAnswer, setSavingAnswer] = useState(false);
+
+  const [emailVerified, setEmailVerified] = useState<string | null>(null);
+  const [sendingEmailVerification, setSendingEmailVerification] =
+    useState(false);
 
   const [interviewStarted, setInterviewStarted] = useState(false);
 
@@ -140,7 +137,7 @@ const ukUniversities = [
   "Canterbury Christ Church University",
   "Cardiff Metropolitan University",
   "Cardiff University",
-  "City St Georgeâ€™s, University of London",
+  "City St George’s, University of London",
   "Coventry University",
   "Cranfield University",
   "De Montfort University",
@@ -156,7 +153,7 @@ const ukUniversities = [
   "Imperial College London",
   "Keele University",
   "Kingston University",
-  "Kingâ€™s College London",
+  "King’s College London",
   "Lancaster University",
   "Leeds Beckett University",
   "Leeds Trinity University",
@@ -177,9 +174,9 @@ const ukUniversities = [
   "Plymouth Marjon University",
   "Queen Margaret University",
   "Queen Mary University of London",
-  "Queenâ€™s University Belfast",
+  "Queen’s University Belfast",
   "Ravensbourne University London",
-  "Regentâ€™s University London",
+  "Regent’s University London",
   "Robert Gordon University",
   "Royal Central School of Speech & Drama",
   "Royal College of Art",
@@ -189,7 +186,7 @@ const ukUniversities = [
   "Sheffield Hallam University",
   "SOAS University of London",
   "Solent University",
-  "St Maryâ€™s University, Twickenham",
+  "St Mary’s University, Twickenham",
   "Swansea University",
   "Teesside University",
   "The Open University",
@@ -307,6 +304,81 @@ const ukInsights = [
 
   const [interviewId, setInterviewId] = useState(() => { if (typeof window !== "undefined") { const existingId = sessionStorage.getItem("precas-active-interview-id"); if (existingId) { return existingId; } } const newId = "PRECAS-" + new Date().getFullYear() + "-" + Math.random().toString(36).substring(2, 8).toUpperCase(); if (typeof window !== "undefined") { sessionStorage.setItem("precas-active-interview-id", newId); } return newId; });
 
+
+  /*
+   * EMAIL VERIFICATION LINK
+   *
+   * A verification link returns to this page with a signed token.
+   * Validate it on the server and bind the verified state to the
+   * email address returned by the server.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = new URLSearchParams(window.location.search).get(
+      "emailVerification"
+    );
+
+    if (!token) {
+      return;
+    }
+
+    let active = true;
+
+    const verifyEmail = async () => {
+      try {
+        const response = await fetch(
+          `/api/verification/email/verify?token=${encodeURIComponent(token)}`
+        );
+
+        const result = await response.json();
+
+        if (!active) {
+          return;
+        }
+
+        if (!response.ok || !result.verified || !result.email) {
+          setEmailVerified(null);
+          setError(
+            result.error ||
+              "Unable to verify your email address. Please request a new verification email."
+          );
+          return;
+        }
+
+        const verifiedEmail = String(result.email).trim().toLowerCase();
+        setEmail(verifiedEmail);
+        setEmailVerified(verifiedEmail);
+        setError("");
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      } catch (verificationError) {
+        console.error(
+          "Unable to verify email address:",
+          verificationError
+        );
+
+        if (active) {
+          setEmailVerified(null);
+          setError(
+            "Unable to verify your email address. Please request a new verification email."
+          );
+        }
+      }
+    };
+
+    verifyEmail();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   /*
    * RESTORE ACTIVE INTERVIEW SESSION
@@ -580,15 +652,6 @@ useEffect(() => {
       });
 
       streamRef.current = stream;
-
-      const audioContext = new AudioContext();
-      const analyser = audioContext.createAnalyser();
-      const microphoneSource = audioContext.createMediaStreamSource(stream);
-
-      microphoneSource.connect(analyser);
-
-      audioContextRef.current = audioContext;
-      microphoneAnalyserRef.current = analyser;
       console.log("Camera tracks:", stream.getVideoTracks().length);
 console.log("Microphone tracks:", stream.getAudioTracks().length);
 
@@ -597,10 +660,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
       }
 
       setCameraReady(true);
-      setCameraTestPassed(false);
-      setMicrophoneDetected(false);
-      setCameraTestSeconds(10);
-      setCameraTestRunning(true);
     } catch (cameraError) {
       console.error(cameraError);
 
@@ -613,83 +672,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
   /*
    * ATTACH CAMERA STREAM TO VIDEO PREVIEWS
    */
-  useEffect(() => {
-    if (!cameraTestRunning) {
-      return;
-    }
-
-    const analyser = microphoneAnalyserRef.current;
-
-    if (!analyser) {
-      setCameraTestRunning(false);
-      setError("Microphone test could not be started. Please try again.");
-      return;
-    }
-
-    let animationFrameId: number | null = null;
-    let elapsedSeconds = 0;
-    let lastSecond = Date.now();
-
-    microphoneDetectedRef.current = false;
-
-    const dataArray = new Uint8Array(analyser.fftSize);
-
-    const monitorMicrophone = () => {
-      analyser.getByteTimeDomainData(dataArray);
-
-      let sum = 0;
-
-      for (let i = 0; i < dataArray.length; i++) {
-        const normalized = (dataArray[i] - 128) / 128;
-        sum += normalized * normalized;
-      }
-
-      const volume = Math.sqrt(sum / dataArray.length);
-
-      if (volume > 0.03) {
-        microphoneDetectedRef.current = true;
-        setMicrophoneDetected(true);
-      }
-
-      const now = Date.now();
-
-      if (now - lastSecond >= 1000) {
-        elapsedSeconds += 1;
-        lastSecond = now;
-
-        setCameraTestSeconds(Math.max(0, 10 - elapsedSeconds));
-
-        if (elapsedSeconds >= 10) {
-          setCameraTestRunning(false);
-
-          const videoTrack = streamRef.current?.getVideoTracks().some(
-            (track) => track.readyState === "live"
-          );
-
-          if (videoTrack && microphoneDetectedRef.current) {
-            setCameraTestPassed(true);
-          } else {
-            setCameraTestPassed(false);
-            setError(
-              "We could not detect your microphone. Please speak during the test and try again."
-            );
-          }
-
-          return;
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(monitorMicrophone);
-    };
-
-    monitorMicrophone();
-
-    return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [cameraTestRunning]);
   useEffect(() => {
     if (!cameraReady || !streamRef.current) {
       return;
@@ -714,11 +696,6 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
   const startInterview = async () => {
     setError("");
 
-    if (!cameraTestPassed) {
-      setError("Please complete the camera and microphone test before starting the interview.");
-      return;
-    }
-
     if (!fullName.trim()) {
       setError("Please enter your full name before starting the interview.");
       return;
@@ -736,6 +713,16 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
 
     if (!emailPattern.test(trimmedEmail)) {
       setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (
+      !emailVerified ||
+      emailVerified !== trimmedEmail.toLowerCase()
+    ) {
+      setError(
+        "Please verify your email address before starting the interview."
+      );
       return;
     }
 
@@ -1210,9 +1197,9 @@ sessionStorage.setItem(
       sessionStorage.getItem(storageKey) ?? "[]"
     ) as string[];
 
-    if (blobPaths.length > 16) {
+    if (blobPaths.length !== 16) {
       throw new Error(
-        `Too many uploaded videos. Found ${blobPaths.length}.`
+        `Expected 16 uploaded videos, but found ${blobPaths.length}.`
       );
     }
 
@@ -1227,11 +1214,6 @@ sessionStorage.setItem(
           interviewId,
           fullName: fullName.trim(),
           email: email.trim(),
-          phone: phone.replace(/\D/g, ""),
-          university: university.trim(),
-          course: course.trim(),
-          intake: intake.trim(),
-          startedAt: interviewStartedAt ?? new Date().toISOString(),
           blobPaths,
         }),
       }
@@ -1493,12 +1475,10 @@ sessionStorage.setItem(
       );
     } else {
       /*
-       * Final question skipped.
-       *
-       * The candidate may finish the interview with fewer than 16 videos.
-       * Restore the recordings already saved locally, then create the same
-       * permanent manifest and secure download token used when the final
-       * question is answered.
+       * Final question skipped: restore the recordings that were actually
+       * saved for this interview before showing the completion screen.
+       * A skipped question does not have a video, but it must not hide the
+       * videos that were already recorded.
        */
       try {
         const answers = await getSavedInterviewAnswers();
@@ -1522,80 +1502,7 @@ sessionStorage.setItem(
         );
       }
 
-      try {
-        const storageKey = `precas-interview-blob-paths-${interviewId}`;
-
-        const blobPaths = JSON.parse(
-          sessionStorage.getItem(storageKey) ?? "[]"
-        ) as string[];
-
-        if (blobPaths.length > 16) {
-          throw new Error(
-            `Too many uploaded videos. Found ${blobPaths.length}.`
-          );
-        }
-
-        const manifestResponse = await fetch(
-          "/api/interview/manifest",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              interviewId,
-              fullName: fullName.trim(),
-              email: email.trim(),
-              phone: phone.replace(/\D/g, ""),
-              university: university.trim(),
-              course: course.trim(),
-              intake: intake.trim(),
-              startedAt:
-                interviewStartedAt ?? new Date().toISOString(),
-              blobPaths,
-            }),
-          }
-        );
-
-        if (!manifestResponse.ok) {
-          const manifestError = await manifestResponse.json();
-
-          throw new Error(
-            manifestError.error ??
-              "Unable to create the interview manifest."
-          );
-        }
-
-        const manifestResult = await manifestResponse.json();
-
-        if (
-          typeof manifestResult.accessToken !== "string" ||
-          !manifestResult.accessToken
-        ) {
-          throw new Error(
-            "Interview manifest was created without a download token."
-          );
-        }
-
-        sessionStorage.setItem(
-          `precas-interview-download-token-${interviewId}`,
-          manifestResult.accessToken
-        );
-
-        setInterviewComplete(true);
-        setInterviewStarted(false);
-        setInterviewPhase("preparation");
-        setSeconds(0);
-      } catch (manifestError) {
-        console.error(
-          "Unable to finalize interview manifest:",
-          manifestError
-        );
-
-        setError(
-          "Your recordings were uploaded, but we could not finalize the interview. Please do not close this page."
-        );
-      }
+      setInterviewComplete(true);
     }
   };
 
@@ -1669,6 +1576,7 @@ sessionStorage.setItem(
 
     setError("");
     setInterviewComplete(false);
+    setEmailVerified(null);
 
     setInterviewStarted(false);
     setInterviewStartedAt(null);
@@ -1777,15 +1685,6 @@ sessionStorage.setItem(
                 <div className="h-5 w-px bg-white/25" />
 
                 <Link
-                  href="/interview/counsellor"
-                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
-                >
-                  Counsellor
-                </Link>
-
-                <div className="h-5 w-px bg-white/25" />
-
-                <Link
                   href="/interview/how-to-use"
                   className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85 transition hover:text-white sm:text-xs"
                 >
@@ -1888,12 +1787,107 @@ sessionStorage.setItem(
                       <input
                         type="email"
                         value={email}
-                        onChange={(event) =>
-                          setEmail(event.target.value)
-                        }
+                        onChange={(event) => {
+                          const nextEmail = event.target.value;
+                          setEmail(nextEmail);
+
+                          if (
+                            emailVerified &&
+                            nextEmail.trim().toLowerCase() !== emailVerified
+                          ) {
+                            setEmailVerified(null);
+                          }
+                        }}
                         placeholder="you@example.com"
                         className="w-full rounded-xl border border-[#dfe2e4] bg-white px-4 py-3.5 hover:border-[#cbd1d6] text-sm text-[#17212b] outline-none transition placeholder:text-[#aab1b6] focus:border-[#b51f2b] focus:ring-2 focus:ring-[#b51f2b]/10"
                       />
+
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <p
+                          className={`text-[11px] font-medium ${
+                            emailVerified
+                              ? "text-green-700"
+                              : "text-[#8a9298]"
+                          }`}
+                        >
+                          {emailVerified
+                            ? "Email verified"
+                            : "Email verification is required before starting"}
+                        </p>
+
+                        {!emailVerified && (
+                          <button
+                            type="button"
+                            disabled={sendingEmailVerification}
+                            onClick={async () => {
+                              setError("");
+
+                              const trimmedEmail = email.trim();
+                              const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                              if (!trimmedEmail) {
+                                setError(
+                                  "Please enter your email address before requesting verification."
+                                );
+                                return;
+                              }
+
+                              if (!emailPattern.test(trimmedEmail)) {
+                                setError("Please enter a valid email address.");
+                                return;
+                              }
+
+                              try {
+                                setSendingEmailVerification(true);
+
+                                const response = await fetch(
+                                  "/api/verification/email",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      email: trimmedEmail,
+                                    }),
+                                  }
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok || !result.success) {
+                                  throw new Error(
+                                    result.error ||
+                                      "Unable to send the verification email."
+                                  );
+                                }
+
+                                setError(
+                                  "Verification email sent. Please check your inbox and click the verification link."
+                                );
+                              } catch (verificationError) {
+                                console.error(
+                                  "Unable to send verification email:",
+                                  verificationError
+                                );
+
+                                setError(
+                                  verificationError instanceof Error
+                                    ? verificationError.message
+                                    : "Unable to send the verification email."
+                                );
+                              } finally {
+                                setSendingEmailVerification(false);
+                              }
+                            }}
+                            className="shrink-0 rounded-lg border border-[#243f9f]/30 px-3 py-2 text-[11px] font-semibold text-[#243f9f] transition hover:bg-[#243f9f]/5 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {sendingEmailVerification
+                              ? "Sending..."
+                              : "Verify Email"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -2020,17 +2014,6 @@ sessionStorage.setItem(
                   </div>
 
                   <div className="mt-7 rounded-xl border border-[#e3e8f5] bg-[#f7f9ff] px-4 py-3.5">
-                    {cameraReady && (
-                      <div className="mb-4 overflow-hidden rounded-xl border border-[#dfe2e4] bg-black">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          muted
-                          playsInline
-                          className="aspect-video w-full object-cover"
-                        />
-                      </div>
-                    )}
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-xs font-semibold text-[#303b45]">
@@ -2038,28 +2021,18 @@ sessionStorage.setItem(
                         </p>
 
                         <p className="mt-1 text-[11px] text-[#8a9298]">
-                          {cameraTestRunning
-                            ? `Testing... ${cameraTestSeconds}s`
-                            : cameraTestPassed
-                              ? "Camera & microphone ready"
-                              : cameraReady
-                                ? "Test failed - try again"
-                                : "Required before the interview"}
+                          {cameraReady
+                            ? "Ready to record"
+                            : "Required before the interview"}
                         </p>
                       </div>
 
                       <button
                         onClick={startCamera}
-                        disabled={cameraTestRunning || cameraTestPassed}
+                        disabled={cameraReady}
                         className="shrink-0 rounded-lg border border-[#243f9f]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#243f9f]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
                       >
-                        {cameraTestRunning
-                          ? "Testing..."
-                          : cameraTestPassed
-                            ? "Ready"
-                            : cameraReady
-                              ? "Try Again"
-                              : "Check"}
+                        {cameraReady ? "Ready" : "Check"}
                       </button>
                     </div>
                   </div>
@@ -2082,9 +2055,16 @@ sessionStorage.setItem(
                     </div>
                   )}
 
+                  {!emailVerified && (
+                    <p className="mt-5 text-center text-[11px] font-medium text-[#8a9298]">
+                      Verify your email address to unlock the interview.
+                    </p>
+                  )}
+
                   <button
   onClick={startInterview}
-  className="group mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(36,63,159,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1d3485] hover:shadow-xl hover:shadow-[#243f9f]/20 active:translate-y-0"
+  disabled={!emailVerified}
+  className="group mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[#243f9f] px-6 py-4 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(36,63,159,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1d3485] hover:shadow-xl hover:shadow-[#243f9f]/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-[#243f9f]"
 >
   <span>Start Interview</span>
 
@@ -2682,20 +2662,6 @@ return (
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

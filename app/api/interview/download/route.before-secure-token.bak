@@ -1,0 +1,66 @@
+import { get } from "@vercel/blob";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest): Promise<Response> {
+  try {
+    const pathname =
+      request.nextUrl.searchParams.get("pathname");
+
+    if (!pathname) {
+      return NextResponse.json(
+        {
+          error: "Missing pathname.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!pathname.startsWith("interviews/")) {
+      return NextResponse.json(
+        {
+          error: "Invalid interview file path.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const result = await get(pathname, {
+      access: "private",
+    });
+
+    if (!result || result.statusCode !== 200) {
+      return NextResponse.json(
+        {
+          error: "Interview recording not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    return new NextResponse(result.stream, {
+      headers: {
+        "Content-Type":
+          result.blob.contentType ?? "application/octet-stream",
+        "Content-Disposition":
+          result.blob.contentDisposition,
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-cache",
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Unable to download private interview recording:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to download interview recording.",
+      },
+      { status: 500 }
+    );
+  }
+}
