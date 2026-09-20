@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -35,6 +35,9 @@ export default function InterviewStartPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const interviewVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const microphoneAnalyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneDetectedRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -53,6 +56,10 @@ export default function InterviewStartPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraTestPassed, setCameraTestPassed] = useState(false);
+  const [cameraTestRunning, setCameraTestRunning] = useState(false);
+  const [cameraTestSeconds, setCameraTestSeconds] = useState(10);
+  const [microphoneDetected, setMicrophoneDetected] = useState(false);
   const [recording, setRecording] = useState(false);
 
   const [interviewPhase, setInterviewPhase] = useState<
@@ -573,6 +580,15 @@ useEffect(() => {
       });
 
       streamRef.current = stream;
+
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphoneSource = audioContext.createMediaStreamSource(stream);
+
+      microphoneSource.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      microphoneAnalyserRef.current = analyser;
       console.log("Camera tracks:", stream.getVideoTracks().length);
 console.log("Microphone tracks:", stream.getAudioTracks().length);
 
@@ -581,6 +597,10 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
       }
 
       setCameraReady(true);
+      setCameraTestPassed(false);
+      setMicrophoneDetected(false);
+      setCameraTestSeconds(10);
+      setCameraTestRunning(true);
     } catch (cameraError) {
       console.error(cameraError);
 
@@ -593,6 +613,83 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
   /*
    * ATTACH CAMERA STREAM TO VIDEO PREVIEWS
    */
+  useEffect(() => {
+    if (!cameraTestRunning) {
+      return;
+    }
+
+    const analyser = microphoneAnalyserRef.current;
+
+    if (!analyser) {
+      setCameraTestRunning(false);
+      setError("Microphone test could not be started. Please try again.");
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+    let elapsedSeconds = 0;
+    let lastSecond = Date.now();
+
+    microphoneDetectedRef.current = false;
+
+    const dataArray = new Uint8Array(analyser.fftSize);
+
+    const monitorMicrophone = () => {
+      analyser.getByteTimeDomainData(dataArray);
+
+      let sum = 0;
+
+      for (let i = 0; i < dataArray.length; i++) {
+        const normalized = (dataArray[i] - 128) / 128;
+        sum += normalized * normalized;
+      }
+
+      const volume = Math.sqrt(sum / dataArray.length);
+
+      if (volume > 0.03) {
+        microphoneDetectedRef.current = true;
+        setMicrophoneDetected(true);
+      }
+
+      const now = Date.now();
+
+      if (now - lastSecond >= 1000) {
+        elapsedSeconds += 1;
+        lastSecond = now;
+
+        setCameraTestSeconds(Math.max(0, 10 - elapsedSeconds));
+
+        if (elapsedSeconds >= 10) {
+          setCameraTestRunning(false);
+
+          const videoTrack = streamRef.current?.getVideoTracks().some(
+            (track) => track.readyState === "live"
+          );
+
+          if (videoTrack && microphoneDetectedRef.current) {
+            setCameraTestPassed(true);
+          } else {
+            setCameraTestPassed(false);
+            setError(
+              "We could not detect your microphone. Please speak during the test and try again."
+            );
+          }
+
+          return;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(monitorMicrophone);
+    };
+
+    monitorMicrophone();
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [cameraTestRunning]);
   useEffect(() => {
     if (!cameraReady || !streamRef.current) {
       return;
@@ -616,6 +713,11 @@ console.log("Microphone tracks:", stream.getAudioTracks().length);
    */
   const startInterview = async () => {
     setError("");
+
+    if (!cameraTestPassed) {
+      setError("Please complete the camera and microphone test before starting the interview.");
+      return;
+    }
 
     if (!fullName.trim()) {
       setError("Please enter your full name before starting the interview.");
@@ -1909,6 +2011,17 @@ sessionStorage.setItem(
                   </div>
 
                   <div className="mt-7 rounded-xl border border-[#e3e8f5] bg-[#f7f9ff] px-4 py-3.5">
+                    {cameraReady && (
+                      <div className="mb-4 overflow-hidden rounded-xl border border-[#dfe2e4] bg-black">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          muted
+                          playsInline
+                          className="aspect-video w-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-xs font-semibold text-[#303b45]">
@@ -1916,18 +2029,28 @@ sessionStorage.setItem(
                         </p>
 
                         <p className="mt-1 text-[11px] text-[#8a9298]">
-                          {cameraReady
-                            ? "Ready to record"
-                            : "Required before the interview"}
+                          {cameraTestRunning
+                            ? `Testing... ${cameraTestSeconds}s`
+                            : cameraTestPassed
+                              ? "Camera & microphone ready"
+                              : cameraReady
+                                ? "Test failed - try again"
+                                : "Required before the interview"}
                         </p>
                       </div>
 
                       <button
                         onClick={startCamera}
-                        disabled={cameraReady}
+                        disabled={cameraTestRunning || cameraTestPassed}
                         className="shrink-0 rounded-lg border border-[#243f9f]/30 px-3.5 py-2 text-xs font-semibold text-[#243f9f] transition hover:bg-[#243f9f]/5 disabled:cursor-not-allowed disabled:border-green-600/20 disabled:text-green-700"
                       >
-                        {cameraReady ? "Ready" : "Check"}
+                        {cameraTestRunning
+                          ? "Testing..."
+                          : cameraTestPassed
+                            ? "Ready"
+                            : cameraReady
+                              ? "Try Again"
+                              : "Check"}
                       </button>
                     </div>
                   </div>
@@ -2550,6 +2673,18 @@ return (
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
